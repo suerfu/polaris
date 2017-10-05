@@ -48,7 +48,6 @@ void PrintLogo(){
 }
 
 void PrintUsage( int argc, char* argv[] ){
-    PrintLogo();
     int width1 = strlen("usage: ");
     int width2 = strlen("usage: ") + strlen( argv[0] );
     cout<< setw(5) << "usage: " << argv[0] << " --cfg config-file [--option] [parameter(s)]" <<endl;

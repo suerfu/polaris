@@ -5,7 +5,6 @@
 #include <string>
 
 using std::endl;
-//using std::cerr;
 using std::string;
 
 
@@ -44,6 +43,8 @@ void ConfigParser::Serialize( ostream& os){
     // --- calculate how many bytes of data to write ---
 
     uint32_t bytes = sizeof( header );
+    uint32_t version = 0x0;
+    bytes += sizeof( version);
 
     for( itr1=parameters.begin(); itr1!=parameters.end(); ++itr1){
 
@@ -74,11 +75,12 @@ void ConfigParser::Serialize( ostream& os){
     }
     bytes += sizeof( header );
 
-    cout << "will write "<< bytes <<" bytes\n";
     // --- write actual header and the contents of the parameters
 
     os.write( reinterpret_cast<char*>( &header ), sizeof( header) );
     os.write( reinterpret_cast<char*>( &bytes), sizeof(bytes));
+    os.write( reinterpret_cast<char*>( &version), sizeof(version));
+
 
     for( itr1=parameters.begin(); itr1!=parameters.end(); ++itr1){
 
@@ -124,25 +126,31 @@ void ConfigParser::Deserialize( istream& is){
     uint32_t header = 0;
         // header to indicate the following is config file
     uint32_t len = 0;
-        // length of strings to write.
+        // length of strings to read.
     uint32_t bytes = 0;
         // total number of bytes in header
     uint32_t bytes_read = 0;
         // total number of bytes read
+    uint32_t version = 0;
+        // version control
 
 
     is.read( reinterpret_cast<char*>( &header), sizeof(header));
     bytes_read += sizeof(header);
 
-    if( header!=0xcc1234cc )
-        cerr << "wrong!\n";
+    if( header!=0xcc1234cc ){
+        Print( "Wrong endianess\n", ERR);
+        return;
+    }
         //change_endian = false;
 
     is.read( reinterpret_cast<char*>( &bytes), sizeof(bytes));
         // total number of bytes to be extracted
     bytes_read += sizeof(bytes);
 
-    cerr << "will read "<< bytes_read << "bytes\n";
+    is.read( reinterpret_cast<char*>( &version), sizeof(version));
+        // total number of bytes to be extracted
+    bytes_read += sizeof(version);
 
     uint32_t nparam, nval;
 
@@ -154,7 +162,6 @@ void ConfigParser::Deserialize( istream& is){
         dir = string( len, ' ');
         is.read( &dir[0], len);
         bytes_read += len;
-        cerr << dir <<' ';
 
         is.read( reinterpret_cast<char*>( &nparam), sizeof(nparam));
         bytes_read += sizeof(nparam);
@@ -171,8 +178,6 @@ void ConfigParser::Deserialize( istream& is){
             is.read( &param[0], len);
             bytes_read += len;
             
-            cerr << param << ' ';
-
             is.read( reinterpret_cast<char*>( &nval), sizeof(nval));
             bytes_read += sizeof(nval);
 
@@ -308,6 +313,7 @@ int ConfigParser::LoadFile( const string& filename ){
     ifstream file( filename.c_str(), std::ios_base::in );
     if( !file.good() ){
         Print( "Error: opening file "+filename, ERR);
+        parameters.clear();
     	return -1;      // signal error if file cannot be opened.
     }
 

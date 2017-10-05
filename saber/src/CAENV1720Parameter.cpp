@@ -347,6 +347,7 @@ void CAENV1720Parameter::Serialize( char* p){
     data.push_back( pre_trig_sample);
     data.push_back( post_trig_sample);
     data.push_back( buff_code);
+    data.push_back( GetEvtSizeInSamp());
     data.push_back( runmode);
     data.push_back( lvds_io_output);
     data.push_back( logic_level_ttl);
@@ -391,6 +392,8 @@ void CAENV1720Parameter::Deserialize( char* p, bool flip){
     pre_trig_sample = data[offset++];
     post_trig_sample = data[offset++];
     buff_code = data[offset++];
+    offset++;
+        // skip direct setting of event size.
     runmode = static_cast<V1720_RUNMODE>( data[offset++]);
     lvds_io_output = data[offset++];
     logic_level_ttl = data[offset++];

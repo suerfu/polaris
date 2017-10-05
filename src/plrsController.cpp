@@ -289,10 +289,10 @@ void plrsController::InsModule( const string& lib, const string& fcn ){
     //
     mod.handle = LibraryOpen( lib );
     if(  mod.handle==0 ){
-        mod.handle = dlopen( lib.c_str(), RTLD_NOW);
+        mod.handle = dlopen( lib.c_str(), RTLD_NOW | RTLD_GLOBAL);
         Print( "Opening library "+lib+"...\n", DETAIL);
         if ( !mod.handle ) {
-            Print( "Error: cannot open library"+lib+"\n", ERR);
+            Print( "Error: cannot open library "+lib+" - "+string(dlerror())+"\n", ERR);
             ChangeState(ERROR);
             return;
         }

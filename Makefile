@@ -1,59 +1,61 @@
 CC = g++ # -g
 
 NAME = polaris
-EXENAME = polaris
-LIBNAME = lib$(NAME).so
+
+SOMAJOR = 1
+SOMINOR = 0
+LIBNAME = lib$(NAME).so.${SOMAJOR}.${SOMINOR}
 
 PREFIX = /usr/local
 
 CPP_FILES = $(wildcard src/*.cpp)
 OBJ_FILES = $(patsubst %.cpp, %.o, $(CPP_FILES))
 
-CFLAGS = -Wall -std=c++0x -fPIC -I./include
+CFLAGS = -Wall -std=c++0x -I./include
 LD_FLAGS = -lpthread -ldl
 
-# LD_PLOT = -lplot -lXaw -lXmu -lXt -lXext -lX11 -lpng -lz -lm
+all : $(NAME) lib
 
-#CAEN_FLAGS = -I/usr/include/CAEN/
-#LD_CAEN = $(INCLUDE_CAEN) -lCAENVME
-
-all : $(EXENAME) lib
-
-$(EXENAME) : ./exe/$(EXENAME).o $(OBJ_FILES)
-#	@$(CC) -L./lib -l$(NAME) $(LD_FLAGS) $(LD_PLOT) $< -o $@
+$(NAME) : ./exe/$(NAME).o $(OBJ_FILES)
 	@echo "linking $@"
-	@$(CC) $^ $(LD_FLAGS) $(LD_PLOT) $(LD_CAEN) -o $@
+	@$(CC) -o $@ $^ $(LD_FLAGS) 
 
 
-./exe/$(EXENAME).o : ./exe/$(EXENAME).cpp
+./exe/$(NAME).o : ./exe/$(NAME).cpp
 	@echo "compiling $@"
 	@$(CC) $(CFLAGS) -c $^ -o $@
 
-lib : ./lib/$(LIBNAME)
-	@mkdir -p ./lib
 
-./lib/$(LIBNAME) : $(OBJ_FILES)
+lib : ./lib/$(LIBNAME)
+./lib/$(LIBNAME) : ${OBJ_FILES}
+	@mkdir -p ./lib
 	@echo "linking $@"
-	@$(CC) -fPIC -shared -Wl,-soname,$(LIBNAME) $(LD_FLAGS) $(LD_PLOT) $(LD_CAEN) $^ -o $@
+	@$(CC) -fPIC -shared -Wl,-soname,lib${NAME}.so.${SOMAJOR} ${OBJ_FILES} -o $@ $(LD_FLAGS) 
+
 
 %.o : %.cpp
 	@echo "compiling $@"
-	@$(CC) $(CFLAGS) $(CAEN_FLAGS) -c $^ -o $@
+	@$(CC) -fPIC $(CFLAGS) -c $^ -o $@
+
 
 install:
+	@echo "installing..."
 	@mkdir -p ${PREFIX}/include/$(NAME)
 	@cp ./include/*.h ${PREFIX}/include/$(NAME)
 	@cp ./lib/$(LIBNAME) ${PREFIX}/lib/
 	@cp ./${NAME} $(PREFIX)/bin/
+	@ldconfig -n ${PREFIX}/lib
+
 
 uninstall:
 	rm -rf ${PREFIX}/include/${NAME}
 	rm ${PREFIX}/lib/$(LIBNAME)
 	rm ${PREFIX}/bin/$(NAME)
 
+
 clean:
 	@echo "cleaning..."
 	@-rm ${OBJ_FILES} > /dev/null 2>&1
-	@-rm ./lib/*.so > /dev/null 2>&1
-	@-rm $(EXENAME) > /dev/null 2>&1
+	@-rm ./lib/${LIBNAME} > /dev/null 2>&1
+	@-rm $(NAME) > /dev/null 2>&1
 
