@@ -1,7 +1,7 @@
 #include "SerialDAQ.h"
 
 #include <sstream>
-
+#include <iostream>
 extern "C" SerialDAQ* create_SerialDAQ( plrsController* c ){ return new SerialDAQ(c);}
 
 
@@ -86,19 +86,24 @@ void SerialDAQ::Event(){
     if( rdo==0 )
         return;
 
+
     while( port.serial_read( &lsb, 1)<0 ){
         if(GetState()!=RUN)
-            break;
-        sched_yield();
+            return;
+//			std::cout << std::hex << unsigned(lsb&0x3f) << std::endl;
+//		if( (lsb&0xc0)!=0x0 )
+//			continue;
     }
     while( port.serial_read( &msb, 1)<0 ){
         if(GetState()!=RUN)
-            break;
-        sched_yield();
+            return;
+//		if( (msb&0xc0)!=0xc0 )
+//			continue;
     }
+//			std::cout << "lsb: "<< std::hex << unsigned(lsb&0x3f) << std::endl;
 
-    int* a = ( reinterpret_cast<int*> ( rdo ));
-    *a = ( (lsb>>4)&0x0f ) + (int(msb)<<4);
+    int * a = ( reinterpret_cast< int* > ( rdo ));
+    *a = ( lsb&0x3f ) + (int( msb<<6) & 0xfc0);
 
     PushToBuffer( addr_nxt, rdo);
 }

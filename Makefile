@@ -44,7 +44,7 @@ install:
 	@cp ./include/*.h ${PREFIX}/include/$(NAME)
 	@cp ./lib/$(LIBNAME) ${PREFIX}/lib/
 	@cp ./${NAME} $(PREFIX)/bin/
-	@ldconfig -n ${PREFIX}/lib
+	@sudo ldconfig -n ${PREFIX}/lib/lib${NAME}.so
 
 
 uninstall:
