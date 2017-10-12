@@ -339,18 +339,19 @@ uint32_t CAENV1720::ReadFIFO(uint32_t* bytes, uint32_t bytes_to_read){
     uint32_t trd = GetEvtSizeInByte();
 
     if( bytes_to_read!=trd )
-        std::cerr<<"WARNING: V1720::ReadFIFO user attempting to read "<<bytes_to_read<<" while each event has "<<trd<<" bytes.\n";
+        std::cerr<<"Warning: V1720 ReadFIFO user attempting to read "<<bytes_to_read<<" while each event has "<<trd<<" bytes.\n";
 
     /************************ first read header *****************************************************/
     //
     int rd=0;                   // number of bytes read.
     CVErrorCodes err = CAENVME_FIFOBLTReadCycle( handle, param.GetBaseAddr(), (unsigned char*)bytes, bytes_to_read, cvA32_U_MBLT, cvD64, &rd);
 
-    if( err!=cvSuccess )
+    if( err!=cvSuccess ){
+        std::cerr << "Error V1720:" << CAENVME_DecodeError( err ) << endl;
         return 0;
+    }
     else if( (bytes[0] & 0xf0000000) !=  0xa0000000 ){
-        std::cerr<<"ERROR: V1720::ReadFIFO event framing error.\n";
-        std::cerr<<"       Header is\t0x"<<hex<<bytes[0]<<"\t0x"<<hex<<bytes[1]<<"\t0x"<<hex<<bytes[2]<<"\t0x"<<hex<<bytes[3]<<endl;
+        std::cerr<<"ERROR: V1720 ReadFIFO event framing error. Header is 0x"<<hex<<bytes[0]<<" 0x"<<hex<<bytes[1]<<" 0x"<<hex<<bytes[2]<<" 0x"<<hex<<bytes[3]<<endl;
         return 0;
     }
 
@@ -512,7 +513,6 @@ void CAENV1720::ConfigFPTrigOut(){
     uint32_t data = param.local_fp_trigout & 0xff;
     SetBit(&data, param.sw_fp_trigout ? 1 : 0, 31, 31);
     SetBit(&data, param.ext_fp_trigout ? 1 : 0, 30, 30);
-    cout << "FP FP " << param.sw_fp_trigout <<'\t' << param.ext_fp_trigout <<endl;
     WriteRegister(FRONT_PANEL_TRIGOUT, data);
 }
 

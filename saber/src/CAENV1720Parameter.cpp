@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstring>
+#include <cmath>
 
 #include "CAENV1720Parameter.h"
 
@@ -18,6 +19,7 @@ CAENV1720Parameter::CAENV1720Parameter() : VMEBoardParameter(){
         threshold[i] = 2046;
         tcrossthresh[i] = 0x4;
         dac[i] = 0xfd66;
+        descriptor[i] = 0;
     }
 
     trig_overlap = false;
@@ -61,33 +63,43 @@ CAENV1720Parameter::~CAENV1720Parameter(){;}
 
 
 
-void CAENV1720Parameter::Print(){
-/*
-    VMEBoardParameter::Print();
+string CAENV1720Parameter::GetPrintString(){
+
+    stringstream ss;
+    ss << "\n\tV1720 parameters:\n\t";
+    
     for( int i=0; i<8; ++i){
-        cout<<"\n\t"<<"Channel "<<i<< ( ((ch_enable_mask & (0x1<<i)) ==0 ) ? " disabled" : " enabled");
-        cout<<"\n\t\t"<<"Local trigger "<<i<< (( (local_trig_enable & (0x1<<i)) ==0 ) ? " disabled" : " enabled");
-        cout<<"\n\t\t"<<"Local trigger FP out "<<i<< (( (local_fp_trigout & (0x1<<i)) ==0 ) ? " disabled" : " enabled");
-        cout<<"\n\t\t"<<"Threshold "<<threshold[i];
-        cout<<"\n\t\t"<<"Time cross threshold "<<tcrossthresh[i];
-        cout<<"\n\t\t"<<"DAC "<<dac[i];
+        ss << "Channel " << i << "\n\t";
+        ss << "\tEnabled       : " << ( (ch_enable_mask & (0x1<<i)) != 0 ) << "\n\t";
+        ss << "\tLocal trigger : " << ( (local_trig_enable & (0x1<<i)) != 0 ) << "\n\t";
+        ss << "\tLocal trig FP : " << ( (local_fp_trigout & (0x1<<i)) != 0 ) << "\n\t";
+        ss << "\tThreshold     : " << threshold[i] << "\n\t";
+        ss << "\tTime x thresh : " << tcrossthresh[i] << "\n\t";
+        ss << "\tDAC           : " << dac[i] << "\n\t";
+        ss << "\tDescriptor    : " << descriptor[i] << "\n\t";
     }
-    cout<<"\n\t"<<"Trigger overlap "<< (( trig_overlap ) ? "enabled" : "disabled");
-    cout<<"\n\t"<<"Trigger overthreahold "<< (( trig_over_threshold ) ? "true" : "false");
 
-    cout<<"\n\t"<<"SW trigger "<< (( sw_trig_enable ) ? "enabled" : " disabled");
-    cout<<"\n\t"<<"Ext trigger "<< (( ext_trig_enable ) ? "enabled" : "disabled");
-    cout<<"\n\t"<<"FP sw trigger out "<< (( sw_fp_trigout ) ? "enabled" : " disabled");
-    cout<<"\n\t"<<"FP ext trigger out "<< (( ext_fp_trigout ) ? "enabled" : "disabled");
+    ss << "\n\t";
+    ss << "Trigger overlap    : " << ( trig_overlap ) << "\n\t";
+    ss << "Trigger overthresh : " << ( trig_over_threshold ) << "\n\t";
+    ss << "Software trigger   : " << ( sw_trig_enable ) << "\n\t";
+    ss << "External trigger   : " << ( ext_trig_enable ) << "\n\t";
+    ss << "FP sw trigger out  : " << ( sw_fp_trigout ) << "\n\t";
+    ss << "FP ext trigger out : " << ( ext_fp_trigout ) << "\n\t";
 
-    cout<<"\n\t"<<"Custom size "<< (( enable_custom_size ) ? "enabled" : "disabled");
-    cout<<"\n\t"<<"Pre trigger sample "<< dec << pre_trig_sample;
-    cout<<"\n\t"<<"Post trigger sample "<< dec << post_trig_sample;
-    cout<<"\n\t"<<"Buffer code "<<hex<<buff_code;
-    cout<<"\n\t"<<"Logic level "<< (logic_level_ttl ? "TTL" : "NIM");
-    cout<<"\n\t"<<"LVDS IO direction "<< (lvds_io_output ? "OUT" : "IN");
-    cout<<endl;
-*/
+    ss << "\n\t";
+    ss << "Logic level        : " << (logic_level_ttl ? "TTL" : "NIM") << "\n\t";
+    ss << "LVDS IO direction  : " << (lvds_io_output ? "OUT" : "IN");
+
+    ss << "\n\t";
+    ss << "Custom size        : " << ( enable_custom_size ) << "\n\t";
+    ss << "Pre trigger sample : " << dec << pre_trig_sample << "\n\t";
+    ss << "Post trigger sample: " << dec << post_trig_sample << "\n\t";
+    ss << "Buffer code        : " << hex << buff_code << "\n\t";
+    ss << "Samples per event  : " << dec <<GetEvtSizeInSamp() << "\n";
+    ss << "\n";
+
+    return ss.str();
 }
 
 
@@ -95,15 +107,14 @@ void CAENV1720Parameter::Print(){
 void CAENV1720Parameter::SetParamFromConfig( ConfigParser* p, string dir){
 
     // if didn't find the required directory, return default settings.
-    if( ! p->Find(dir) ){
-        p->Print( " v1720 : In the parameter file did not find parameters for V1720. Using defaults.\n", ERR);
+    if( !p->Find(dir) && !p->Find("/module/daq/board*/") ){
+        p->Print( " In the config file did not find parameters for V1720. Using defaults.\n", ERR);
         return ;
     }
 
     // dir should be specified as /dir/
     else if( (*dir.rbegin())!='/' ){
-        cerr<<"ERROR: "<<dir<<" is in wrong format for specifying directory.\n";
-        cerr<<"       Please specify directory as /dir/"<<endl;
+        cerr << "ERROR: "<<dir<<" is in wrong format. Directory ends with /.\n";
         return ;
     }
 
@@ -116,8 +127,9 @@ void CAENV1720Parameter::SetParamFromConfig( ConfigParser* p, string dir){
     /* local channel settings, threshold, DAC, enable mask, local trig, fp out.        */
     /***********************************************************************************/
 
-    string gl = "/module/daq/board*/channel*/";
-    string wch = dir+"channel*/";
+    string wildboard = "/module/daq/board*/";
+    string wbdwch = wildboard+"channel*/";
+    string wildch = dir+"channel*/";
         // channel wildcard. Settings apply to all channels not explicitly specified.
 
     // first apply channel global settings.
@@ -128,47 +140,56 @@ void CAENV1720Parameter::SetParamFromConfig( ConfigParser* p, string dir){
     local_fp_trigout = 0x0;
 
     // if at global level enable is found, all bits are enabled.
-    if ( p->GetBool( gl+"enable", false ) )
-        ch_enable_mask = 0xff;
-    if ( p->GetBool( wch+"enable", false ) )
-        ch_enable_mask = 0xff;
+    if( p->Find( wbdwch+"enable") )
+        ch_enable_mask = p->GetBool( wbdwch+"enable", false) ? 0xff : 0;
+    if( p->Find( wildch+"enable") )
+        ch_enable_mask = p->GetBool( wildch+"enable", false) ? 0xff : 0;
 
-    if ( p->GetBool( gl+"local_trigger_enable", false) )
-        local_trig_enable = 0xff;
-    if ( p->GetBool( wch+"local_trigger_enable", false) )
-        local_trig_enable = 0xff;
+    if( p->Find( wbdwch+"local_trigger_enable") )
+        local_trig_enable = p->GetBool( wbdwch+"local_trigger_enable", false ) ? 0xff : 0;
+    if( p->Find( wildch+"local_trigger_enable") )
+        local_trig_enable = p->GetBool( wildch+"local_trigger_enable", false ) ? 0xff : 0;
 
-    if ( p->GetBool( gl+"fp_local_trigger_out_enable", false) )
-        local_fp_trigout = 0xff;
-    if ( p->GetBool( wch+"fp_local_trigger_out_enable", false) )
-        local_fp_trigout = 0xff;
+
+    if ( p->Find( wbdwch+"fp_local_trigger_out_enable" ))
+        local_fp_trigout = p->GetBool( wbdwch+"fp_local_trigger_out_enable", false ) ? 0xff : 0;
+    if ( p->Find( wildch+"fp_local_trigger_out_enable" ))
+        local_fp_trigout = p->GetBool( wildch+"fp_local_trigger_out_enable", false ) ? 0xff : 0;
+
 
     // settings to each local channel
     
-    //ch_enable_mask = 0x0;
 
     for( int i=0; i<8; ++i){
         stringstream ss;
         ss << dir << "channel" << i << "/";
         string ch = ss.str();
 
-        if( p->GetBool( ch+"enable", false) ){ // only when the channel is enabled.
+        if( p->Find( ch+"enable") ){ // only when the channel is enabled.
+            if( p->GetBool( ch+"enable", false) )
+                ch_enable_mask |= (0x1<<i);
+            else
+                ch_enable_mask &= ~(0x1<<i);
+        }
 
         // first check global settings, then check individual channel to overwrite changes.
-            threshold[i] = p->GetInt(gl+"threshold", threshold[i]);
-            threshold[i] = p->GetInt(wch+"threshold", threshold[i]);
-            threshold[i] = p->GetInt(ch+"threshold", threshold[i]);
+        threshold[i] = p->GetInt(wbdwch+"threshold", threshold[i]);
+        threshold[i] = p->GetInt(wildch+"threshold", threshold[i]);
+        threshold[i] = p->GetInt(ch+"threshold", threshold[i]);
 
-            tcrossthresh[i] = p->GetInt( gl+"time_cross_threshold", tcrossthresh[i]);
-            tcrossthresh[i] = p->GetInt( wch+"time_cross_threshold", tcrossthresh[i]);
-            tcrossthresh[i] = p->GetInt( ch+"time_cross_threshold", tcrossthresh[i]);
+        tcrossthresh[i] = p->GetInt( wbdwch+"time_cross_threshold", tcrossthresh[i]);
+        tcrossthresh[i] = p->GetInt( wildch+"time_cross_threshold", tcrossthresh[i]);
+        tcrossthresh[i] = p->GetInt( ch+"time_cross_threshold", tcrossthresh[i]);
 
-            dac[i] = p->GetInt( gl+"DAC", dac[i]);
-            dac[i] = p->GetInt( wch+"DAC", dac[i]);
-            dac[i] = p->GetInt( ch+"DAC", dac[i]);
+        dac[i] = p->GetInt( wbdwch+"DAC", dac[i]);
+        dac[i] = p->GetInt( wildch+"DAC", dac[i]);
+        dac[i] = p->GetInt( ch+"DAC", dac[i]);
 
-            ch_enable_mask |= (0x1<<i);
-        }
+        descriptor[i] = p->GetInt( wbdwch+"descriptor", descriptor[i]);
+        descriptor[i] = p->GetInt( wildch+"descriptor", descriptor[i]);
+        descriptor[i] = p->GetInt( ch+"descriptor", descriptor[i]);
+
+//        }
         
         // local channel as trigger source
         if( p->Find( ch+"local_trigger_enable")){
@@ -189,43 +210,44 @@ void CAENV1720Parameter::SetParamFromConfig( ConfigParser* p, string dir){
 
 
     /* trigger over threshold and trigger overlap */
-    trig_over_threshold = p->GetBool( "/board*/trigger_over_threshold", trig_over_threshold);
+    trig_over_threshold = p->GetBool( wildboard+"trigger_over_threshold", trig_over_threshold);
     trig_over_threshold = p->GetBool( dir+"trigger_over_threshold", trig_over_threshold);
 
-    trig_overlap = p->GetBool( "/board*/trigger_overlap", trig_overlap);
+    trig_overlap = p->GetBool( wildboard+"trigger_overlap", trig_overlap);
     trig_overlap = p->GetBool( dir+"trigger_overlap", trig_overlap);
 
 
     /* software trigger and external trigger */
-    sw_trig_enable = p->GetBool( "/board*/software_trigger_enable", sw_trig_enable);
+    sw_trig_enable = p->GetBool( wildboard+"software_trigger_enable", sw_trig_enable);
     sw_trig_enable = p->GetBool( dir+"software_trigger_enable", sw_trig_enable);
     
-    ext_trig_enable = p->GetBool( "/board*/external_trigger_enable", ext_trig_enable);
+    ext_trig_enable = p->GetBool( wildboard+"external_trigger_enable", ext_trig_enable);
     ext_trig_enable = p->GetBool( dir+"external_trigger_enable", ext_trig_enable);
 
 
     /* software and external front-panel trigger output */
-    ext_fp_trigout = p->GetBool( "/board*/fp_external_trigger_out_enable", ext_fp_trigout);
+    ext_fp_trigout = p->GetBool( wildboard+"fp_external_trigger_out_enable", ext_fp_trigout);
     ext_fp_trigout = p->GetBool( dir+"fp_external_trigger_out_enable", ext_fp_trigout);
 
-    sw_fp_trigout = p->GetBool( "/board*/fp_software_trigger_out_enable", sw_fp_trigout);
+    sw_fp_trigout = p->GetBool( wildboard+"fp_software_trigger_out_enable", sw_fp_trigout);
     sw_fp_trigout = p->GetBool( dir+"fp_software_trigger_out_enable", sw_fp_trigout);
-    cout << "FP : " << sw_fp_trigout << endl;
 
 
     /* front panel logic type and LVDS IO direction*/
-    logic_level_ttl = p->GetBool( "/board*/logic_TTL", logic_level_ttl);
+    logic_level_ttl = p->GetBool( wildboard+"logic_TTL", logic_level_ttl);
     logic_level_ttl = p->GetBool( dir+"logic_TTL", logic_level_ttl);
 
-    lvds_io_output = p->GetBool( "/board*/LVDS_IO_out", lvds_io_output);
+    lvds_io_output = p->GetBool( wildboard+"LVDS_IO_out", lvds_io_output);
     lvds_io_output = p->GetBool( dir+"LVDS_IO_out", lvds_io_output);
 
 
     /* acquisition control */
-    string mode = p->GetString( "/run_mode", "register_controlled");
-        // first check run mode in global root space.
-    mode = p->GetString( "/board*/run_mode", mode);
-    mode = p->GetString( dir+"run_mode", mode);
+    string mode = "register_controlled";
+    if( p->Find( dir+"run_mode") )
+        mode = p->GetString( dir+"run_mode");
+    else if( p->Find( wildboard+"run_mode") )
+        mode = p->GetString( wildboard+"run_mode");
+
     if(mode=="first_trigger_controlled")
         runmode = FIRST_TRIG_CON;
     else
@@ -233,26 +255,29 @@ void CAENV1720Parameter::SetParamFromConfig( ConfigParser* p, string dir){
 
 
     /* customer size enable/disable */
-    enable_custom_size = p->GetBool( "/custom_size_enable", enable_custom_size);
-    enable_custom_size = p->GetBool( "/board*/custom_size_enable", enable_custom_size);
+    enable_custom_size = p->GetBool( wildboard+"/board*/custom_size_enable", enable_custom_size);
     enable_custom_size = p->GetBool( dir+"custom_size_enable", enable_custom_size);
 
 
     /* event size */
     float pre(0), post(0);
-    pre = p->GetFloat( "/pre_trigger_window_us", 0.1);
-    pre = p->GetFloat( "/board*/pre_trigger_window_us", pre);
+    pre = p->GetFloat( wildboard+"pre_trigger_window_us", pre);
     pre = p->GetFloat( dir+"pre_trigger_window_us", pre);
-    post = p->GetFloat( "/post_trigger_window_us", 0.9);
-    post = p->GetFloat( "/board*/post_trigger_window_us", post);
+    post = p->GetFloat( wildboard+"post_trigger_window_us", post);
     post = p->GetFloat( dir+"post_trigger_window_us", post);
+
 
     pre_trig_sample = 4*(int(pre*250)/4);
     post_trig_sample = 4*(int(post*250)/4);
 
+    // somehow below settings give bus error upon readout
+    //pre_trig_sample = (4*int( round( pre*250 ) ))/4;
+    //post_trig_sample = (4*int( round( post*250) ))/4;
+
     // manually set buffer code here
     buff_code =  0x00;
     uint32_t sum = pre_trig_sample + post_trig_sample;
+
 
     if( sum <= 1024)
         buff_code = 0x0a;
@@ -277,9 +302,6 @@ void CAENV1720Parameter::SetParamFromConfig( ConfigParser* p, string dir){
     else
         buff_code = 0x0;
 
-    //for( unsigned int i = 0; i<10; i++ )
-    //    if( sum <= (1024<<i) ) param.buff_code = (0x0A - i*0x01);
-    //cout<<"Total sample size is: "<<dec<<sum<<"\tBuffer code is: "<<param.buff_code<<endl;
     return;
 }
 
@@ -317,12 +339,11 @@ uint32_t CAENV1720Parameter::GetEvtSizeInByte(){
 }
 
 
-int CAENV1720Parameter::GetHeaderSize(){
+unsigned int CAENV1720Parameter::GetHeaderSize(){
     int bytes = 0;
 
-    bytes += 3*8*sizeof(threshold[0]);
-        // threshold, tcrossthresh, dac
-    bytes += 16*sizeof(ch_enable_mask);
+    bytes += 4*8 + 18 + 4;
+        // channelwise parameters + other registers + header/version...
 
     return bytes;
 }
@@ -332,12 +353,21 @@ void CAENV1720Parameter::Serialize( char* p){
 
     vector<uint32_t> data;
 
+    data.push_back( 0xad1234ad );
+        // begin of ADC header
+    data.push_back( sizeof( base_addr) * GetHeaderSize());
+        // size of header in bytes, including current word and last header, but excluding first header.
+    data.push_back( GetVersion() );
+        // version
+
+
     data.push_back( base_addr);
 
     for( int i=0; i<8; ++i){
         data.push_back( threshold[i] );
         data.push_back( tcrossthresh[i]);
         data.push_back( dac[i]);
+        data.push_back( descriptor[i]);
     }
 
     data.push_back( ch_enable_mask);
@@ -357,9 +387,12 @@ void CAENV1720Parameter::Serialize( char* p){
     data.push_back( ext_fp_trigout);
     data.push_back( local_trig_enable);
     data.push_back( local_fp_trigout);
+    data.push_back( 0xad1234ad) ;
 
+    int bytes_copied = 0;
     for( unsigned int i=0; i<data.size(); ++i){
-        memcpy( p+i*sizeof(uint32_t), &data[i], sizeof( uint32_t) );
+        memcpy( p+bytes_copied, &data[i], sizeof( uint32_t) );
+        bytes_copied += sizeof(uint32_t);       
     }
 }
 
@@ -370,19 +403,23 @@ void CAENV1720Parameter::Deserialize( char* p, bool flip){
     vector<uint32_t> data;
     uint32_t temp = 0;
 
-    for( int i=0; i<GetHeaderSize(); ++i){
+    for( unsigned int i=0; i<GetHeaderSize()-1; ++i){
         memcpy( &temp, p+i*sizeof(uint32_t), sizeof( uint32_t) );
         data.push_back(temp);
     }
 
-    base_addr = data[0];    ++offset;
+    offset = 2;
+
+    base_addr = data[offset];    ++offset;
+
     for( int i=0; i<8; ++i){
-        threshold[i] = data[1+3*i];
+        threshold[i] = data[offset];
         ++offset;
-        tcrossthresh[i] = data[2+3*i];
+        tcrossthresh[i] = data[offset];
         ++offset;
-        dac[i] = data[3+3*i];
+        dac[i] = data[offset];
         ++offset;
+        descriptor[i] = data[offset];
     }
 
     ch_enable_mask = data[offset++];

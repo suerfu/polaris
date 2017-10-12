@@ -57,7 +57,7 @@ int VMEBoardParameter::GetStatus(){
 }
 
 
-int VMEBoardParameter::GetHeaderSize(){
+unsigned int VMEBoardParameter::GetHeaderSize(){
     return 0;
 }
 

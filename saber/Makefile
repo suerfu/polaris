@@ -16,6 +16,7 @@ CFLAGS = -Wall -std=c++0x -fPIC -I./include
 
 
 PLRS_FLAGS = -I/usr/local/include/polaris
+LD_POLARIS = -L/usr/local/lib -lpolaris
 
 
 CAEN_FLAGS = -I/usr/include/CAEN
@@ -30,7 +31,7 @@ lib : ./lib/$(LIBNAME)
 ./lib/$(LIBNAME) : $(OBJ_FILES)
 	@echo "linking $@"
 	@mkdir -p ./lib
-	@$(CC) -fPIC -shared -Wl,-soname,$(LIBNAME) $^ -o $@ $(LD_CAEN) 
+	@$(CC) -fPIC -shared -Wl,-soname,$(LIBNAME) -o $@ $^ ${LD_POLARIS} $(LD_CAEN) 
 
 %.o : %.cpp
 	@echo "compiling $@"

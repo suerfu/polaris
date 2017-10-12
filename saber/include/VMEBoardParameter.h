@@ -18,7 +18,7 @@ public:
     VMEBoardParameter( );
         //!< Constructor. Initialize handle with the argument.
     
-    ~VMEBoardParameter();
+    virtual ~VMEBoardParameter();
         //!< Destructor.
 
     uint32_t GetBaseAddr();
@@ -46,7 +46,7 @@ public:
         //!< Returns 0 if no error.
         //!< Else program should be terminated.
 
-    virtual int GetHeaderSize();
+    virtual unsigned int GetHeaderSize();
         //!< Return size of header for board parameter in number of bytes.
 
     virtual void Serialize( char* p);

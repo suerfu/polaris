@@ -82,30 +82,26 @@ void SerialGnuplot::Run(){
 
     while( GetState()==RUN && GetStatus()!=ERROR ){
 
-        rdo = PullFromBuffer();
-        while( rdo==0 ){
-            if( GetState()!=RUN )
-                break;
-            rdo = PullFromBuffer();
-            if( rdo==0 )
-                sched_yield();
-            else
-                break;
+        rdo = PullFromBuffer( RUN );
+
+        if( rdo!=0 ){
+
+            data.push_back( (*(reinterpret_cast<int*> (rdo))));    // least sig bit
+
+            if( data.size()>1000 ){
+                Clear();
+                gnuplot->plot_x < vector<int> > ( data, "Intensity of light at 1000 nm");
+                data.clear();
+            }
+
+            PushToBuffer( addr_nxt, rdo);
+            rdo = 0;
         }
 
-        if( rdo==0 )
+        else{
             break;
-
-        data.push_back( (*(reinterpret_cast<int*> (rdo))));    // least sig bit
-
-        if( data.size()>1000 ){
-            Clear();
-            gnuplot->plot_x < vector<int> > ( data, "Intensity of light at 1000 nm");
-            data.clear();
         }
 
-        PushToBuffer( addr_nxt, rdo);
-        rdo = 0;
     }
     Print( "Gnuplot finished plotting\n", DETAIL);
 }

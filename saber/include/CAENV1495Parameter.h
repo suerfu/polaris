@@ -52,9 +52,9 @@ public:
 
     ~CAENV1495Parameter();
 
-    void Print();
+    string GetPrintString();
 
-    void SetParamFromConfig( ConfigParser*, string s="/module/daq/trigger/");
+    void SetParamFromConfig( ConfigParser*, string s="/module/daq/logic_trigger/");
         //!< This static method is used to retrieve parameters from user-specified config file via SVParamHandler object and returns a corresponding CAENV1495Parameter object.
 
     V1495_OMODE output_mode; //!< Output mode.
@@ -76,13 +76,14 @@ public:
     uint32_t dead_time; //!< Dead time imposed after successful global trigger.
     uint32_t veto_time; //!< Veto window. Useful only in veto mode.
 
-    int GetHeaderSize(){
-        return 12*sizeof(uint32_t);
-    }
+
+    unsigned int GetHeaderSize();
 
     void Serialize( char* p );
 
     void Deserialize( char* p, bool flip = false );
+
+    uint32_t GetVersion(){ return 0;}
 };
 
 #endif

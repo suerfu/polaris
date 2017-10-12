@@ -693,7 +693,7 @@ Gnuplot& Gnuplot::plotfile_x(const std::string &filename,
         cmdstr << " title \"" << title << "\" ";
 
     if(smooth == "")
-        cmdstr << "with " << pstyle;
+        cmdstr << "w l";// << pstyle;
     else
         cmdstr << "smooth " << smooth;
 

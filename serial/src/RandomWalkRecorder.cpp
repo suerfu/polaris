@@ -24,8 +24,7 @@ void RandomWalkRecorder::Run(){
 
     while( GetState()==RUN ){
 
-        while( rdo == 0 && GetState()==RUN )
-            rdo = PullFromBuffer();
+        rdo = PullFromBuffer( RUN );
 
         if( rdo==0 )
             break;

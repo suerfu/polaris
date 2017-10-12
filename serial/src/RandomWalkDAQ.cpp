@@ -70,12 +70,9 @@ void RandomWalkDAQ::UnConfigure(){
 }
 
 void RandomWalkDAQ::Event(){
-    void* p = 0;
-    while( p==0 ){
-        if( GetState()!=RUN || GetStatus()==ERROR)
-            break;
-        p = PullFromBuffer();
-    }
+
+    void* p = PullFromBuffer( RUN );
+
     if( p!=0 ){
         data = reinterpret_cast<RandomArray*>( p );
         data->Read( file );
@@ -93,7 +90,9 @@ void RandomWalkDAQ::StartDAQ(){;}
 void RandomWalkDAQ::StopDAQ(){;}
 
 void RandomWalkDAQ::CleanUp(){
+
     void* p = PullFromBuffer();
+
     while( p!=0 ){
         delete reinterpret_cast<RandomArray*>(p);
         p = PullFromBuffer();

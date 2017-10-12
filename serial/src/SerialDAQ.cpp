@@ -30,14 +30,15 @@ void SerialDAQ::Configure(){
     else
         Print( "opening "+fname+" for data acquisition\n", DETAIL);
 
-    port.set_raw();
-    port.set_baud( B9600 );
-
     if( port.serial_open( fname.c_str() )<0 ){
         Print( "Error: "+port.get_errmsg()+"\n", ERR);
         SetStatus( ERROR );
         return;
     }
+
+    port.set_raw();
+    port.set_baud( B9600 );
+    port.set_iflag( IGNPAR, true);
 
     for( int i=0; i<buff_size; ++i ){
         int id = ctrl->GetIDByName( this->GetModuleName() );
@@ -75,30 +76,23 @@ void SerialDAQ::Event(){
 
     void* rdo = 0;
 
-    rdo = PullFromBuffer();
-    while( rdo==0 ){
-        if( GetState()!=RUN )
-            break;
-        rdo = PullFromBuffer();
-        if( rdo==0 )
-            sched_yield();
-    }
+    rdo = PullFromBuffer( RUN );
+
     if( rdo==0 )
         return;
-
 
     while( port.serial_read( &lsb, 1)<0 ){
         if(GetState()!=RUN)
             return;
 //			std::cout << std::hex << unsigned(lsb&0x3f) << std::endl;
-//		if( (lsb&0xc0)!=0x0 )
-//			continue;
+		if( (lsb&0xc0)!=0x0 )
+			continue;
     }
     while( port.serial_read( &msb, 1)<0 ){
         if(GetState()!=RUN)
             return;
-//		if( (msb&0xc0)!=0xc0 )
-//			continue;
+		if( (msb&0xc0)!=0xc0 )
+			continue;
     }
 //			std::cout << "lsb: "<< std::hex << unsigned(lsb&0x3f) << std::endl;
 

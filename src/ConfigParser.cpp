@@ -42,7 +42,7 @@ void ConfigParser::Serialize( ostream& os){
 
     // --- calculate how many bytes of data to write ---
 
-    uint32_t bytes = sizeof( header );
+    uint32_t bytes = 2*sizeof( header );
     uint32_t version = 0x0;
     bytes += sizeof( version);
 
@@ -574,7 +574,7 @@ vector< int > ConfigParser::GetIntArray( const string& name){
     vector<string> str = GetStrArray( name );
     vector<int> int_array;
     for( vector<string>::iterator itr = str.begin(); itr!=str.end(); ++itr){
-        int_array.push_back( std::stoi( *itr, 0, 0) );
+        int_array.push_back( std::stol( *itr, 0, 0) );
     }
     return int_array;
 }
@@ -612,7 +612,7 @@ int ConfigParser::GetInt( const string& name, bool* found){
     else{
         *found = true;
     }
-    return std::stoi( s, 0, 0 );
+    return std::stol( s, 0, 0 );
 }
 
 

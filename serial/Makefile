@@ -1,6 +1,6 @@
 # Makefile for compiing saber library for data acquisition with polaris
 
-CC = g++ # -g
+CC = g++ -pg # -g
 
 NAME = serial
 LIBNAME = lib$(NAME).so

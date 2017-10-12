@@ -111,6 +111,17 @@ void* plrsStateMachine::PullFromBuffer(){
 
 
 
+void* plrsStateMachine::PullFromBuffer( DAQSTATE st){
+    void* p = 0;
+    while( p==0 && GetState()==st ){
+        p = PullFromBuffer();
+        sched_yield();
+    }
+    return p;
+}
+
+
+
 void plrsStateMachine::PushCommand( unsigned int i, string c){
     return ctrl->PushCommand( i, c);
 }

@@ -1,5 +1,6 @@
 #include "SaberDAQ.h"
 #include "SaberDAQData.h"
+#include "SaberDAQHeader.h"
 
 #include <algorithm>
 #include <sstream>
@@ -113,7 +114,7 @@ void SaberDAQ::Initialize(){
     if( !found ){
         total_event_number = cparser->GetInt( "/cmdl/e", &found );
         if( !found ){
-            total_event_number = 0x8fff;
+            total_event_number = 0xffffffff;
         }
     }
 
@@ -211,6 +212,10 @@ void SaberDAQ::Configure(){
     bool found = false;;
     std::map<string, VMEConnection>::const_iterator citr;
 
+
+    vector<SaberDAQHeader*> header_to_send;
+
+
     // **************************************************************
     //                          trigger
     // **************************************************************
@@ -227,6 +232,16 @@ void SaberDAQ::Configure(){
         param_trig.push_back(param);
         v1495.push_back( CAENV1495( (citr->second).handle, param));
     
+
+        // ** send configuration information to disk recorder.
+        char* p = new char[ 4*param.GetHeaderSize() ];
+        param.Serialize( p );
+
+        SaberDAQHeader* hdr = new SaberDAQHeader();
+        hdr->CopyHeader( p, 4*param.GetHeaderSize() );
+        header_to_send.push_back( hdr );
+        delete p;
+
         Print( "Trigger configured.\n", DETAIL);
     }
 
@@ -267,12 +282,12 @@ void SaberDAQ::Configure(){
 
         string dirname = adc_itr->first;
 
+        CAENV1720Parameter param;
+        param.SetParamFromConfig( cparser, dirname);
+
         bool adc_enabled = cparser->GetBool( dirname+"enable", &found );
 
         if( adc_enabled && found ){
-
-            CAENV1720Parameter param;
-            param.SetParamFromConfig( cparser, dirname);
 
             if( param.ch_enable_mask>0x0 ){
 
@@ -286,6 +301,15 @@ void SaberDAQ::Configure(){
             if( param.runmode==FIRST_TRIG_CON )
                 ext_trig_to_start = true;
         }
+
+        char* p = new char[ 4*param.GetHeaderSize() ];
+        param.Serialize( p );
+
+        SaberDAQHeader* hdr = new SaberDAQHeader();
+        hdr->CopyHeader( p, 4*param.GetHeaderSize() );
+        header_to_send.push_back( hdr );
+
+        delete p;
     }
 
 
@@ -300,6 +324,44 @@ void SaberDAQ::Configure(){
     }
         
     Print( "Data buffer configured.\n", DETAIL);
+
+
+    // **************************************************************
+    //               Config global header and send all
+    // **************************************************************
+
+
+    // global header begin
+
+    uint32_t glb_header[4];
+    glb_header[0] = 0xaa1234aa;
+
+    glb_header[1] = 4*sizeof( glb_header[0] );
+    for( unsigned int i=0; i<header_to_send.size(); ++i)
+        glb_header[1] += header_to_send[i]->size();
+
+    glb_header[2] = 0;
+    glb_header[3] = ctrl->GetTimeStamp();
+
+    SaberDAQHeader* glb = new SaberDAQHeader();
+    glb->CopyHeader( glb_header, 4*sizeof( glb_header[0] ) );
+    PushToBuffer( addr_nxt, glb);
+
+
+    // send ADC and Trigger header
+
+    for( unsigned int i=0; i<header_to_send.size(); ++i)
+        PushToBuffer( addr_nxt, header_to_send[i]);
+
+
+    uint32_t glb_header_cls[2];
+    glb_header_cls[0] = 0xaa1234aa;
+    glb_header_cls[1] = sizeof( glb_header_cls[0])*2;
+
+    SaberDAQHeader* glb_cls = new SaberDAQHeader();
+    glb_cls->CopyHeader( glb_header_cls, 2*sizeof( glb_header_cls[0] ) );
+    PushToBuffer( addr_nxt, glb_cls );
+
 }
 
 
@@ -370,11 +432,6 @@ void SaberDAQ::StopDAQ(){
 
     for( std::vector<CAENV1720>::iterator itr = v1720.begin(); itr!=v1720.end(); ++itr)
         itr->StopBoard();
-    /*
-    if( ext_trig_to_start)
-        for( std::vector<CAENV1495>::iterator itr = v1495.begin(); itr!=v1495.end(); ++itr)
-            itr->TriggerFPGA();
-    */
 
 }
 
@@ -391,31 +448,43 @@ void SaberDAQ::Event(){
             return;
     }
 
+    // At this point, there is at least 1 event in each board.
+
     void* vptr = 0;
     SaberDAQData* rdo = 0;
 
     for( unsigned int bd=0; bd<v1720.size(); ++bd){
 
-        while( vptr==0 && GetState()==RUN ){
+        while( vptr==0 ){
             vptr = PullFromBuffer();
-        }
-
-        if( vptr!=0 ){
-            rdo  = reinterpret_cast<SaberDAQData*>( vptr );
-
-            if( v1720[bd].ReadFIFO( (*rdo)[bd].GetBufferAddr(), (*rdo)[bd].bytes() )==0 ){
-                stringstream ss;
-                ss << "Error : no event in board " << bd << "\n";
-                Print( ss.str(), ERR);
+            if( vptr!=0 ){   // could be header instead of data
+                rdo  = reinterpret_cast<SaberDAQData*>( vptr );
+                if( rdo->IsHeader() ){
+                    delete rdo;
+                    vptr = 0;
+                    rdo = 0;
+                }
             }
-
-            // following code should be executed regardless of read fifo.
-            PushToBuffer( addr_nxt, rdo);
-            rdo = 0;
-            vptr = 0;
+            else
+                sched_yield();
         }
-        else
+
+        rdo  = reinterpret_cast<SaberDAQData*>( vptr );
+
+        if( v1720[bd].ReadFIFO( (*rdo)[bd].GetBufferAddr(), (*rdo)[bd].bytes() )==0 ){
+            stringstream ss;
+            ss << "Error : no event in board " << bd << "\n";
+            Print( ss.str(), ERR);
+            SetStatus(ERROR);
             break;
+        }
+        else{
+            PushToBuffer( addr_nxt, rdo);
+        }
+
+        rdo = 0;
+        vptr = 0;
+
     }
     ++event_counter;
 }
@@ -440,6 +509,7 @@ void SaberDAQ::PostEvent(){
 
     if( event_counter>= total_event_number){
         PushCommand(0, "max-evt");
+        Print( "Maximum event number reached.\n", INFO);
         return;
     }
 }
@@ -460,4 +530,58 @@ bool SaberDAQ::UpdateTimeSinceLastTrigger(){
     }
 
     return false;
+}
+
+
+
+void SaberDAQ::PreRun(){
+
+    // *** initial header
+
+    uint32_t evt_header[3];
+    evt_header[0] = 0xee1234ee;
+    evt_header[1] = 4*sizeof(evt_header[0]);
+    evt_header[2] = 0;
+    evt_header[3] = 0;
+
+    // calculate bytes per event:
+    for( unsigned int i=0; i<v1720.size(); ++i){
+        evt_header[3] += v1720[i].GetEvtSizeInByte();
+    }
+
+    SaberDAQHeader* evt = new SaberDAQHeader();
+    evt->CopyHeader( evt_header, 4*sizeof( evt_header[0] ) );
+    PushToBuffer( addr_nxt, evt);
+
+    StartDAQ();
+}
+
+
+
+void SaberDAQ::PostRun(){
+
+    StopDAQ();
+
+    // ****** close event header
+
+    uint32_t evt_header[2];
+    evt_header[0] = 0xee1234ee;
+    evt_header[1] = sizeof(evt_header[0])*2;
+
+    SaberDAQHeader* evt = new SaberDAQHeader();
+    evt->CopyHeader( evt_header, 2*sizeof( evt_header[0] ) );
+    PushToBuffer( addr_nxt, evt);
+
+    // ****** clode global header
+
+    uint32_t glb_header[5];
+    glb_header[0] = 0xff1234ff;
+    glb_header[1] = 5*sizeof( glb_header[0] );
+    glb_header[2] = 0;
+    glb_header[3] = ctrl->GetTimeStamp();
+    glb_header[4] = 0xff1234ff;
+
+    SaberDAQHeader* glb = new SaberDAQHeader();
+    glb->CopyHeader( glb_header, 5*sizeof( glb_header[0] ) );
+    PushToBuffer( addr_nxt, glb);
 }

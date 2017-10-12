@@ -11,6 +11,7 @@ SaberGraphics::SaberGraphics( plrsController* c ) : plrsStateMachine( c ){
     channel = 0;    set_channel = false;
     board = 0;      set_board = false;
     pause = false;
+    refresh_rate = 1;   // refresh interval in second
 }
 
 
@@ -24,8 +25,10 @@ SaberGraphics::~SaberGraphics(){
 
 
 void SaberGraphics::Configure(){
-    if( cparser->GetBool("/module/graphics/enable", false))
+    if( cparser->GetBool("/module/graphics/enable", false)){
         gnuplot = new Gnuplot("Waveform");
+        refresh_rate = cparser->GetInt( "/module/graphics/refresh_rate", refresh_rate);
+    }
     else
         gnuplot = 0;
 
@@ -70,32 +73,38 @@ void SaberGraphics::PostRun(){;}
 void SaberGraphics::Run(){
     Print( "SaberGraphics running\n", INFO);
 
+    uint32_t now, last_update;
+    last_update = 0;
 
     void* rdo = 0;
     SaberDAQData* data;
 
     while( GetState()==RUN && GetStatus()!=ERROR ){
 
-        rdo = PullFromBuffer();
-        while( rdo==0 ){
-            if( GetState()!=RUN )
-                break;
-            rdo = PullFromBuffer();
-        }
+        rdo = PullFromBuffer( RUN );
         
         if( rdo!=0){
+
             data = reinterpret_cast<SaberDAQData*>(rdo);
+
+            if( !data->IsHeader() ){
+
+                if( !pause ){
+                    now = ctrl->GetTimeStamp();
+                    if( now-last_update > refresh_rate ){
+                        Clear();
+                        gnuplot->plot_x < SaberBoardRawData > ( (*data)[0], "PMT Waveform");
+                        last_update = now;
+                    }
+                }
+            }
+
+            PushToBuffer( addr_nxt, rdo);
+            rdo = 0;
         }
-        else
+        else{
             break;
-
-        if( !pause ){
-            Clear();
-            gnuplot->plot_x < SaberBoardRawData > ( (*data)[0], "PMT Waveform");
         }
-
-        PushToBuffer( addr_nxt, rdo);
-        rdo = 0;
 
         CommandHandler();
 
@@ -132,4 +141,8 @@ void SaberGraphics::CommandHandler(){
         return;
     }
 
+    if( s=="ch" ){
+        set_channel = true;
+        return;
+    }
 }

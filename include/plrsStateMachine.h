@@ -115,7 +115,9 @@ protected:
 
 	int PushToBuffer( unsigned int i, void*);  //!< Pushes one event into the buffer identified by the ID.
 
-    void* PullFromBuffer();     //!< Pulls one event from the buffer. Can only pull from it's own buffer.
+    void* PullFromBuffer();     //!< Pulls one event from the buffer. Can only pull from it's own buffer. This function returns immediately.
+
+    void* PullFromBuffer( DAQSTATE st); //!< Pulls one event from it's own buffer. Will keep trying as long as state is same as specified.
 
     void PushCommand( unsigned int i, string);   //!< Used to send command to controller
 

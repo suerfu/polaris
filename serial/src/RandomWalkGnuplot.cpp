@@ -59,20 +59,15 @@ void RandomWalkGnuplot::Run(){
     bool pause = false;
 
     while( GetState()==RUN && GetStatus()!=ERROR ){
+
         usleep( 1000000 );
-        while( rdo==0 ){
-            if( GetState()!=RUN )
-                break;
-            rdo = PullFromBuffer();
-        }
+
+        rdo = PullFromBuffer( RUN );
+
         if(rdo!=0){
             Clear();
-            void* rdo2 = 0;
-            while( rdo2==0 ){
-                if( GetState()!=RUN )
-                break;
-                rdo2 = PullFromBuffer();
-            }
+            void* rdo2 = PullFromBuffer( RUN );
+
             if( rdo2!=0 ){
                 if( !pause ){
                     gnuplot->plot_xy <RandomArray, RandomArray> ( *(reinterpret_cast<RandomArray*>(rdo)), *(reinterpret_cast<RandomArray*>(rdo2)), "Random Walk Steps");

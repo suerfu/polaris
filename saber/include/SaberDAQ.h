@@ -51,11 +51,15 @@ protected:
 
     void StopDAQ();
 
+    void PreRun();
+
     void PreEvent();
 
     void Event();
 
     void PostEvent();
+
+    void PostRun();
 
     vector<CAENV1495Parameter> GetTriggerParameter(){ return param_trig;}
 

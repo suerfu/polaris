@@ -103,12 +103,12 @@ public:
 
     ~CAENV1720Parameter();
 
-    void SetParamFromConfig( ConfigParser*, string s="/module/daq/board0");
+    void SetParamFromConfig( ConfigParser*, string s="/module/daq/board0/");
         //!< It returns a V1720 parameter object from SVParamHandler using GetParameter<T> template function.
         //!< This method will be used to initialize the parameter object for the board from user-specified config file.
 
-    void Print();
-        //!< Prints out all parameter settings. Mainly for debug purpose.
+    string GetPrintString();
+        //!< Return a string summarizing all parameters.
 
     int GetNChanEnabled();
         //!< Returns number of enabled channels.
@@ -133,6 +133,9 @@ public:
     
     uint32_t dac[8];
         //!< DAC register controls DC offset applied to the signal.
+
+    uint32_t descriptor[8];
+        //!< Custom pattern to describe characteristics of channels.
 
 
     /* channel global setting */
@@ -196,11 +199,13 @@ public:
         //!< Local trigger by threshold will output TTL/NIM signal on the LEMO output on the front panel.
         //!< This output is not the LVDS signal.
 
-    int GetHeaderSize();
+    unsigned int GetHeaderSize();
 
     void Serialize( char* p );
 
     void Deserialize( char* p, bool flip );
+
+    uint32_t GetVersion(){ return 0;}
 };
 
 

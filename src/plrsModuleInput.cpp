@@ -1,7 +1,10 @@
 #include "plrsModuleInput.h"
 
+#include <unistd.h>
 
-pthread_mutex_t mux_module_input = PTHREAD_MUTEX_INITIALIZER;
+
+pthread_mutex_t mux_module_input; // = PTHREAD_MUTEX_INITIALIZER;
+//pthread_cond_t cond_input; // = PTHREAD_COND_INITIALIZER;
 
 
 // InputHandler will probe for user input through a while loop.
@@ -17,6 +20,7 @@ void* InputHandler( void* c){
             if( cin.good() ){
                 pthread_mutex_lock( &mux_module_input );
                     *str = temp_input;
+//                pthread_cond_broadcast( &cond_input);
                 pthread_mutex_unlock( &mux_module_input );
             }
             else{
@@ -31,6 +35,10 @@ void* InputHandler( void* c){
 
 plrsModuleInput::plrsModuleInput( plrsController* c) : plrsStateMachine(c){
     input = "";
+
+    pthread_mutex_init( &mux_module_input, 0);
+//    pthread_cond_init( &cond_input, 0);
+
     pthread_create( &thread_input, 0, InputHandler, (void*)(&input) );
 }
 
@@ -52,7 +60,7 @@ void plrsModuleInput::Initialize(){
     }
     while( GetState()==INIT ){
         IOHandler();
-        sched_yield();
+        usleep(50*1000);
     }
 }
 
@@ -73,7 +81,7 @@ void plrsModuleInput::Configure(){
 
     while( GetState()==CONFIG ){
         IOHandler();
-        sched_yield();
+        usleep(50*1000);
     }
 }
 
@@ -94,7 +102,7 @@ void plrsModuleInput::PreRun(){
 void plrsModuleInput::Run(){
     while( GetState()==RUN ){
         IOHandler();
-        sched_yield();
+        usleep(20*1000);
     }
 }
 

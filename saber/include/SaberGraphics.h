@@ -50,6 +50,7 @@ private:
 
     bool pause;
 
+    uint32_t refresh_rate;
 };
 
 extern "C" SaberGraphics* create_SaberGraphics( plrsController* c);

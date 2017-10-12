@@ -515,7 +515,8 @@ bool plrsController::ChangeState( DAQSTATE s, unsigned int wait_time){
         }
 
         CommandHandler();
-        sched_yield();
+        usleep(10*1000);
+//        sched_yield();
     }
 
     Print( "Time out error\n", ERR);

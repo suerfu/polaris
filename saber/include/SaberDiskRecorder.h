@@ -20,11 +20,11 @@ protected:
 
 	void UnConfigure();
 
-    void PreRun(){}
+    void PreRun();
 
     virtual void Run();
 
-    void PostRun(){}
+    void PostRun();
 
     void CleanUp(){ plrsModuleRecorder::CleanUp(); }
 

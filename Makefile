@@ -1,4 +1,4 @@
-CC = g++ # -g
+CC = g++  #-pg # -g
 
 NAME = polaris
 
@@ -56,6 +56,7 @@ uninstall:
 clean:
 	@echo "cleaning..."
 	@-rm ${OBJ_FILES} > /dev/null 2>&1
+	@-rm ./exe/${NAME}.o > /dev/null 2>&1
 	@-rm ./lib/${LIBNAME} > /dev/null 2>&1
 	@-rm $(NAME) > /dev/null 2>&1
 
