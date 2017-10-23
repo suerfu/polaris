@@ -356,7 +356,7 @@ void SaberDAQ::Configure(){
 
     uint32_t glb_header_cls[2];
     glb_header_cls[0] = 0xaa1234aa;
-    glb_header_cls[1] = sizeof( glb_header_cls[0])*2;
+    glb_header_cls[1] = 2*sizeof( glb_header_cls[0]);
 
     SaberDAQHeader* glb_cls = new SaberDAQHeader();
     glb_cls->CopyHeader( glb_header_cls, 2*sizeof( glb_header_cls[0] ) );
@@ -538,7 +538,7 @@ void SaberDAQ::PreRun(){
 
     // *** initial header
 
-    uint32_t evt_header[3];
+    uint32_t evt_header[4];
     evt_header[0] = 0xee1234ee;
     evt_header[1] = 4*sizeof(evt_header[0]);
     evt_header[2] = 0;
