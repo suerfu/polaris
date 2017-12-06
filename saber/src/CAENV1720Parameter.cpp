@@ -365,35 +365,47 @@ void CAENV1720Parameter::Serialize( char* p){
 
     for( int i=0; i<8; ++i){
         data.push_back( threshold[i] );
-        data.push_back( tcrossthresh[i]);
-        data.push_back( dac[i]);
-        data.push_back( descriptor[i]);
+        data.push_back( tcrossthresh[i] );
+        data.push_back( dac[i] );
+        data.push_back( descriptor[i] );
     }
 
-    data.push_back( ch_enable_mask);
-    data.push_back( trig_over_threshold);
-    data.push_back( trig_overlap);
-    data.push_back( enable_custom_size);
-    data.push_back( pre_trig_sample);
-    data.push_back( post_trig_sample);
-    data.push_back( buff_code);
-    data.push_back( GetEvtSizeInSamp());
-    data.push_back( runmode);
-    data.push_back( lvds_io_output);
-    data.push_back( logic_level_ttl);
-    data.push_back( sw_trig_enable);
-    data.push_back( sw_fp_trigout);
-    data.push_back( ext_trig_enable);
-    data.push_back( ext_fp_trigout);
-    data.push_back( local_trig_enable);
-    data.push_back( local_fp_trigout);
-    data.push_back( 0xad1234ad) ;
+    data.push_back( ch_enable_mask );
+    data.push_back( trig_over_threshold );
+    data.push_back( trig_overlap );
+    data.push_back( enable_custom_size );
+    data.push_back( pre_trig_sample );
+    data.push_back( post_trig_sample );
+    data.push_back( buff_code );
+    data.push_back( GetEvtSizeInSamp() );
+    data.push_back( runmode );
+    data.push_back( lvds_io_output );
+    data.push_back( logic_level_ttl );
+    data.push_back( sw_trig_enable );
+    data.push_back( sw_fp_trigout );
+    data.push_back( ext_trig_enable );
+    data.push_back( ext_fp_trigout );
+    data.push_back( local_trig_enable );
+    data.push_back( local_fp_trigout );
+    data.push_back( 0xad1234ad );
 
     int bytes_copied = 0;
     for( unsigned int i=0; i<data.size(); ++i){
         memcpy( p+bytes_copied, &data[i], sizeof( uint32_t) );
         bytes_copied += sizeof(uint32_t);       
     }
+}
+
+void CAENV1720Parameter::Deserialize( ifstream& file ){
+
+    int size = sizeof(uint32_t)*GetHeaderSize();
+
+    char* buffer = new char[size];
+    file.read( buffer, size);
+
+    Deserialize( buffer );
+
+    delete [] buffer;
 }
 
 
@@ -403,12 +415,13 @@ void CAENV1720Parameter::Deserialize( char* p, bool flip){
     vector<uint32_t> data;
     uint32_t temp = 0;
 
-    for( unsigned int i=0; i<GetHeaderSize()-1; ++i){
+    for( unsigned int i=0; i<GetHeaderSize(); ++i){
         memcpy( &temp, p+i*sizeof(uint32_t), sizeof( uint32_t) );
         data.push_back(temp);
     }
+    // copy everything into a vector of uint32_t
 
-    offset = 2;
+    offset = 3;
 
     base_addr = data[offset];    ++offset;
 

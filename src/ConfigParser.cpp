@@ -729,19 +729,19 @@ bool ConfigParser::Find( const string& name) {
 void ConfigParser::Print( ostream& os){
     map< string, map< string, vector<string> > >::iterator itr;
     for( itr=parameters.begin(); itr!=parameters.end(); ++itr){
-        os<<"* "<<itr->first<<endl;
+        os << itr->first << endl;
 
         map<string, vector<string> >::iterator itr2;
         for( itr2=(itr->second).begin(); itr2!=(itr->second).end(); ++itr2){
-            os<<"\t* "<<itr2->first;
+            os << "  |- " << itr2->first << "    ";
             vector<string>::iterator itr3;
             for( itr3=itr2->second.begin(); itr3!= itr2->second.end(); ++itr3){
-                os<<'\t'<<*itr3;
+                os << *itr3 << ", ";
             }
-            os<<endl;
+            os << endl;
         }
     }
-    os<<endl;
+    os << endl;
     return;
 }
 
@@ -749,20 +749,18 @@ void ConfigParser::Print( ostream& os){
 
 void ConfigParser::Print(){
 
-    Print( "Printing ConfigParser:\n", INFO);
-
     map< string, map< string, vector<string> > >::iterator itr;
     for( itr=parameters.begin(); itr!=parameters.end(); ++itr){
-        Print( "\t"+itr->first, INFO);
+        Print( "  "+itr->first+"\n", INFO);
 
         map<string, vector<string> >::iterator itr2;
         for( itr2=(itr->second).begin(); itr2!=(itr->second).end(); ++itr2){
-            Print( "\t\t"+itr2->first, INFO);
+            string params = "    |-" + itr2->first + " : ";
             vector<string>::iterator itr3;
             for( itr3=itr2->second.begin(); itr3!= itr2->second.end(); ++itr3){
-                Print( "\t"+*itr3, INFO);
+                params += *itr3 + ", ";
             }
-            Print( "\n", INFO);
+            Print( params+"\n", INFO);
         }
     }
     Print( "\n", INFO);

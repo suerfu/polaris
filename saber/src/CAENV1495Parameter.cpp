@@ -169,12 +169,27 @@ void CAENV1495Parameter::Serialize( char* p ){
 }
 
 
+
+void CAENV1495Parameter::Deserialize( ifstream& file ){
+
+    int size = sizeof(uint32_t)*GetHeaderSize();
+    
+    char* buffer = new char[ size ];
+    file.read( buffer, size);
+
+    Deserialize( buffer);
+
+    delete [] buffer;
+}
+
+
+
 void CAENV1495Parameter::Deserialize( char* p, bool flip ){
 
     vector<uint32_t> data;
     uint32_t temp = 0;
 
-    for( unsigned int i=0; i<GetHeaderSize()-1; ++i){
+    for( unsigned int i=0; i<GetHeaderSize(); ++i){
         memcpy( &temp, p+i*sizeof(uint32_t), sizeof( uint32_t) );
         data.push_back(temp);
     }

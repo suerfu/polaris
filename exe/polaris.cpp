@@ -23,6 +23,8 @@ int main( int argc, char* argv[] ){
         return -1;
     }
 
+    map.Print();
+
     plrsController ctrl( &map );
 
     ctrl.StateLoop();

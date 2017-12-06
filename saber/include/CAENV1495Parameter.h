@@ -81,6 +81,8 @@ public:
 
     void Serialize( char* p );
 
+    void Deserialize( ifstream& p );
+
     void Deserialize( char* p, bool flip = false );
 
     uint32_t GetVersion(){ return 0;}
