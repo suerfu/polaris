@@ -342,7 +342,7 @@ uint32_t CAENV1720Parameter::GetEvtSizeInByte(){
 unsigned int CAENV1720Parameter::GetHeaderSize(){
     int bytes = 0;
 
-    bytes += 4*8 + 18 + 4;
+    bytes += 4 + 4*8 + 17 + 1;
         // channelwise parameters + other registers + header/version...
 
     return bytes;
@@ -433,6 +433,7 @@ void CAENV1720Parameter::Deserialize( char* p, bool flip){
         dac[i] = data[offset];
         ++offset;
         descriptor[i] = data[offset];
+        ++offset;
     }
 
     ch_enable_mask = data[offset++];
