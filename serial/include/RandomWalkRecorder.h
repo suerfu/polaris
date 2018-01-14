@@ -31,11 +31,8 @@ public:
 
 protected:
 
-    void PreRun(){}
-
     virtual void Run();
 
-    void PostRun(){}
 };
 
 extern "C" RandomWalkRecorder* create_RandomWalkRecorder( plrsController* c);

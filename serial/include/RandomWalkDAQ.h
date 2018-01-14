@@ -22,17 +22,25 @@ public:
 
     int size() const { return _size;}
 
+    int* GetX() { return x;}
+
+    int* GetY() { return array;}
+
     void Read( istream& file);
         //!< Read random numbers from file.
         //
+
     void Write( ostream& file);
         //!< Write the numbers to file.
         //
+
     int operator[]( int i){ return array[i];}
 
     int operator[] ( int i) const { return array[i];}
 
 private:
+
+    int* x;
 
     int* array;
 

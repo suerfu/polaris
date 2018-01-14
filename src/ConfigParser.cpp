@@ -695,7 +695,7 @@ bool ConfigParser::GetBool( const string& name, bool def){
     if( found )
         return a;
     else{
-        string ss = def ? "true" : "false";
+        //string ss = def ? "true" : "false";
         //Print( "ConfigParser : cannot find "+name+", using default value "+ss+".\n", ERR);
         return def;
     }

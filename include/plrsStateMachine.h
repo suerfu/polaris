@@ -104,6 +104,10 @@ private:
 	DAQSTATE WaitForState( DAQSTATE s, int max_try=2000, int poll_rate=1000);
 		//!< Will wait for designated global state to be issued. If not issued in time, signal ERROR.
 
+	void EventLoop();
+        //!< Called right after thread/module is created.
+        //!< This function handles transition between different states.
+
     pthread_mutex_t mutex_fasm; //!< Protect access to state.
 
 protected:
@@ -123,7 +127,7 @@ protected:
 
     string PullCommand();   //!< Check/retrieve command from controller.
 
-    void CommandHandler(){;}  //!< Called to process command stack.
+    virtual void CommandHandler(){;}  //!< Called to process command stack.
 
     // ===================================================================================
 
@@ -133,31 +137,54 @@ protected:
 
     map< string, int > module_table;
 
-    virtual std::string GetModuleName()=0;  //!< Return module name. Used by ctrl to identify different modules.
-
-	virtual void EventLoop();   //!< Begins data acquisition.
-
-    virtual void Initialize();  //!< Called at the beginning to change state to INIT.
-
-    virtual void Configure() = 0;   //!< Called by controller to configure the DAQ system.
-
-    virtual void ConfigDataFlow();  //!< Called to establish data flow between state machines.
-
     void GetModuleTable();  //!< Get information on other modules.
 
 
-    int addr_nxt;   //!< Address to push data to.
+    // ===================================================================================
+    // virtual methods to be implemented in derived classes
+    // ===================================================================================
 
-    virtual void UnConfigure();     //!< Used to transition from Config back to Init.
+    int addr_nxt;
+        //!< Address to push data to.
 
-    virtual void CleanUp(); //!< Called at the beginning of END phase.
+    virtual std::string GetModuleName()=0;
+        //!< Return module name. Used by ctrl to identify different modules.
 
 
-    virtual void PreRun();  //!< Function called before the beginning of run.
+    virtual void Initialize(){}
+        //!< Called at the beginning to change state to INIT.
 
-    virtual void Run() = 0; //!< Main part of data acquisition.
+    virtual void ConfigDataFlow();
+        //!< Called to establish data flow between state machines.
+        //!< This function is called after module table is initialized and before Configure is called.
 
-    virtual void PostRun(); //!< Function called after the end of run.
+    virtual void Configure() = 0;
+        //!< Called by controller to configure the DAQ system.
+
+    virtual void UnConfigure(){}
+        //!< Used to transition from Config back to Init.
+
+    virtual void CleanUp(){}
+        //!< Called at the beginning of END phase.
+
+
+    virtual void PreRun(){}
+        //!< Function called before the beginning of run.
+
+    virtual void Run();
+        //!< Main part of data acquisition.
+
+    virtual void PostRun(){}
+        //!< Function called after the end of run.
+
+    virtual void PreEvent(){}
+        //!< Function called at the beginning of each event.
+
+    virtual void Event(){}
+        //!< Function called to process each event.
+
+    virtual void PostEvent(){}
+        //!< Function called at the end of each event.
 
 };
 

@@ -40,17 +40,6 @@ void plrsModuleDAQ::UnConfigure(){
 
 
 
-//! User will have to implement PreEvent, Event and PostEvent, specifying how they want to acquire data.
-void plrsModuleDAQ::Run(){
-    while( GetState()==RUN && GetStatus()!=ERROR ){
-        PreEvent();
-        Event();
-        PostEvent();
-        sched_yield();
-    }
-}
-
-
 void plrsModuleDAQ::PreRun(){
     StartDAQ();
 }
@@ -69,12 +58,3 @@ void plrsModuleDAQ::StartDAQ(){
 void plrsModuleDAQ::StopDAQ(){
     Print( "ending run...\n", DETAIL);
 }
-
-
-void plrsModuleDAQ::PreEvent(){;}
-
-
-void plrsModuleDAQ::Event(){;}
-
-
-void plrsModuleDAQ::PostEvent(){;}

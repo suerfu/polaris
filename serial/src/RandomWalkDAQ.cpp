@@ -5,6 +5,9 @@
 
 RandomArray::RandomArray( int s) : _size(s){
     array = new int[_size];
+    x = new int[_size];
+    for( int i=0; i<_size; i++)
+        x[i] = i;
     n = 0;
 }
 

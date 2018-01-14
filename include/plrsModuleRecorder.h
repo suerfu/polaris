@@ -37,12 +37,6 @@ protected:
 
 	void UnConfigure();
 
-    void PreRun(){}
-
-    virtual void Run(){}
-
-    void PostRun(){}
-
     void CleanUp();
 
 protected:

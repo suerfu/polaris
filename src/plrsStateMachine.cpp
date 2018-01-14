@@ -326,9 +326,6 @@ void plrsStateMachine::EventLoop(){
 
 
 
-void plrsStateMachine::Initialize(){;}
-
-
 
 void plrsStateMachine::ConfigDataFlow(){
 
@@ -356,12 +353,6 @@ void plrsStateMachine::ConfigDataFlow(){
     }
 }
 
-void plrsStateMachine::UnConfigure(){;}
-
-
-
-void plrsStateMachine::CleanUp(){;}
-
 
 
 void plrsStateMachine::GetModuleTable(){
@@ -369,7 +360,13 @@ void plrsStateMachine::GetModuleTable(){
 }
 
 
-void plrsStateMachine::PreRun(){;}
 
-
-void plrsStateMachine::PostRun(){;}
+void plrsStateMachine::Run(){
+    while( GetState()==RUN && GetStatus()!=ERROR ){
+        PreEvent();
+        Event();
+        PostEvent();
+        CommandHandler();
+        sched_yield();
+    }
+}

@@ -49,18 +49,6 @@ protected:
         //!< Temporarily or permanently stop the DAQ for current run.
         //!< This function is called by base class after each run.
 
-    void Run();
-        //!< Used by DAQ object to return data written.
-        //!< It consists of PreEvent, Event and PostEvent.
-
-    virtual void PreEvent();
-        //!< Function called by base before each event.
-
-    virtual void Event();
-        //!< Main function defining an event. This is an abstract function.
-
-    virtual void PostEvent();
-        //!< General function that gets called after an event. Used to software-trigger boards, etc.
 };
 
 extern "C" plrsModuleDAQ* create_plrsModuleDAQ( plrsController* c);
