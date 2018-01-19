@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
+#include <queue>
 
 using std::endl;
 using std::string;
@@ -985,3 +986,40 @@ void ConfigParser::AddLog( char* s ){
     Print( "Creating log file "+string(s)+"\n", INFO );
     log.open( s, ios::out );
 }
+
+
+
+void* GetInput( void* a){
+    queue<string>* fifo = reinterpret_cast< queue<string>* >(a);
+    string tmp;
+    while( cin>>tmp ){
+        if( cin.good() )
+            fifo->push( tmp );
+        else{
+            cin.ignore( 1024, '\n');
+            cin.clear();
+        }
+    }
+    return 0;
+}
+
+
+
+string getstr(){
+    static bool init = false;
+    static queue<string> fifo;
+    //static pthread_mutex_t mux = PTHREAD_MUTEX_INITIALIZER;
+    if( init==false ){
+        pthread_t thread_root;
+        pthread_create( &thread_root, 0, GetInput, &fifo);
+        init = true;
+    }   
+    if( fifo.empty() )
+        return ""; 
+    else{
+        string return_val = fifo.front();
+        fifo.pop();
+        return return_val;
+    }   
+}
+

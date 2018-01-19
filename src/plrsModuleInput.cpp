@@ -1,13 +1,15 @@
 #include "plrsModuleInput.h"
 
+
 #include <unistd.h>
 
 
-pthread_mutex_t mux_module_input; // = PTHREAD_MUTEX_INITIALIZER;
+//pthread_mutex_t mux_module_input; // = PTHREAD_MUTEX_INITIALIZER;
 //pthread_cond_t cond_input; // = PTHREAD_COND_INITIALIZER;
 
 
-// InputHandler will probe for user input through a while loop.
+/*
+/// InputHandler will probe for user input through a while loop.
 void* InputHandler( void* c){
     string* str = (string*) c;  // str should be the member data of IO module.
     string temp_input = "";
@@ -31,20 +33,20 @@ void* InputHandler( void* c){
     }
     return 0;
 }
-
+*/
 
 plrsModuleInput::plrsModuleInput( plrsController* c) : plrsStateMachine(c){
-    input = "";
+//    input = "";
 
-    pthread_mutex_init( &mux_module_input, 0);
+//    pthread_mutex_init( &mux_module_input, 0);
 //    pthread_cond_init( &cond_input, 0);
 
-    pthread_create( &thread_input, 0, InputHandler, (void*)(&input) );
+//    pthread_create( &thread_input, 0, InputHandler, (void*)(&input) );
 }
 
 
 plrsModuleInput::~plrsModuleInput(){
-    pthread_cancel( thread_input );
+//    pthread_cancel( thread_input );
 }
 
 
@@ -60,7 +62,7 @@ void plrsModuleInput::Initialize(){
     }
     while( GetState()==INIT ){
         IOHandler();
-        usleep(50*1000);
+        usleep(500*1000);
     }
 }
 
@@ -81,7 +83,7 @@ void plrsModuleInput::Configure(){
 
     while( GetState()==CONFIG ){
         IOHandler();
-        usleep(50*1000);
+        usleep(500*1000);
     }
 }
 
@@ -102,7 +104,7 @@ void plrsModuleInput::PreRun(){
 void plrsModuleInput::Run(){
     while( GetState()==RUN ){
         IOHandler();
-        usleep(20*1000);
+        usleep(200*1000);
     }
 }
 
@@ -113,13 +115,14 @@ void plrsModuleInput::PostRun(){
 
 
 void plrsModuleInput::IOHandler(){
-    pthread_mutex_lock( &mux_module_input);
+//    pthread_mutex_lock( &mux_module_input);
+    string input = getstr();
     if( input!="" ){
         Print( "typed "+input+"\n", INFO);
         SendUserCommand( input );
         input = "";
     }
-    pthread_mutex_unlock( &mux_module_input);
+//    pthread_mutex_unlock( &mux_module_input);
 }
 
 void plrsModuleInput::SendUserCommand( string in){
@@ -135,3 +138,5 @@ void plrsModuleInput::SendUserCommand( string in){
     }
 
 }
+
+

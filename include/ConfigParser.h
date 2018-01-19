@@ -225,4 +225,19 @@ void ConfigParser::Print( T t, VERBOSITY v){
     pthread_mutex_unlock( &mutex_cout);
 }
 
+
+
+
+/// This function should be launched as a thread.
+/// It will obtain user input as a string, and push it to the queue of strings pointed to the pointer in the argument. 
+void* GetInput( void* a);
+
+
+
+/// Calling this function will launch GetInput thread.
+/// This function has a static queue of strings that holds the input strings.
+/// Calling this function will either return the next string in queue, or "" in case of no input.
+string getstr();
+
+
 #endif

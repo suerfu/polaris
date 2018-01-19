@@ -7,6 +7,8 @@
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TGraph.h"
+#include "TBox.h"
+#include "TLine.h"
 
 class RandomWalkGraphics : public plrsModuleGraphics{
 
@@ -48,6 +50,9 @@ private:
     TGraph* graph;
         // ROOT graph object
 
+    TBox* box;
+
+    TLine* line;
 };
 
 extern "C" RandomWalkGraphics* create_RandomWalkGraphics( plrsController* c);

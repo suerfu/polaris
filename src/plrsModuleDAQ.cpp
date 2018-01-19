@@ -39,7 +39,7 @@ void plrsModuleDAQ::UnConfigure(){
 }
 
 
-
+/*
 void plrsModuleDAQ::PreRun(){
     StartDAQ();
 }
@@ -58,3 +58,4 @@ void plrsModuleDAQ::StartDAQ(){
 void plrsModuleDAQ::StopDAQ(){
     Print( "ending run...\n", DETAIL);
 }
+*/

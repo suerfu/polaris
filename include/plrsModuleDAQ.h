@@ -37,15 +37,15 @@ protected:
 
     virtual void UnConfigure(); //!< Unset hardware setup.
 
-    void PreRun();  //!< Called at the beginning of RUN phase. It calls StartDAQ.
+//    virtual void PreRun();  //!< Called at the beginning of RUN phase. It calls StartDAQ.
 
-    virtual void StartDAQ();
+//    virtual void StartDAQ();
         //!< Start data acquisition.
         //!< This function is called by base class at the beginning of a run.
 
-    void PostRun(); //!< Called at the end of RUN phase. It calls StopDAQ
+//    virtual void PostRun(); //!< Called at the end of RUN phase. It calls StopDAQ
 
-    virtual void StopDAQ();
+//    virtual void StopDAQ();
         //!< Temporarily or permanently stop the DAQ for current run.
         //!< This function is called by base class after each run.
 

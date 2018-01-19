@@ -6,6 +6,11 @@
 #include <iostream>
 
 #include "TSystem.h"
+#include "TBox.h"
+#include "TLine.h"
+#include "TMultiGraph.h"
+
+TMultiGraph* graphs = new TMultiGraph();
 
 extern "C" RandomWalkGraphics* create_RandomWalkGraphics( plrsController* c){
     return new RandomWalkGraphics(c);
@@ -22,6 +27,8 @@ RandomWalkGraphics::RandomWalkGraphics( plrsController* c) : plrsModuleGraphics(
     app = new TApplication( "_app", 0, 0);
     canvas = 0;
     graph = 0;
+    line = 0;
+    box = 0;
 }
 
 
@@ -36,6 +43,10 @@ void RandomWalkGraphics::Configure(){
         canvas = new TCanvas("Random Walk Pattern");
     if( graph==0 )
         graph = new TGraph();
+    if( line==0 )
+        line = new TLine();
+    if( box==0 )
+        box = new TBox();
 }
 
 
@@ -45,6 +56,10 @@ void RandomWalkGraphics::UnConfigure(){
         delete graph;
     if( canvas!=0 )
         delete canvas;
+    if( line!=0 )
+        delete line;
+    if( box!=0 )
+        delete box;
 }
 
 
@@ -69,8 +84,18 @@ void RandomWalkGraphics::PreEvent(){
 
 
 void RandomWalkGraphics::Draw( void* rdo ){
+
     RandomArray* array = reinterpret_cast<RandomArray*>( rdo );
     graph->DrawGraph( array->GetSize(), array->GetX(), array->GetY(), "AC");
+
+    canvas->Update();
+    line->SetLineColor( kBlue );
+    line->DrawLine(0, 0, array->GetSize(), 0 );
+
+    box->SetFillStyle( 0 );
+    box->SetLineColor( kRed );
+    box->DrawBox( 0, 0, 100, (array->GetY())[99]);
+
     canvas->Update();
     gSystem->ProcessEvents();
 }
