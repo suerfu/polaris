@@ -4,50 +4,15 @@
 #include <unistd.h>
 
 
-//pthread_mutex_t mux_module_input; // = PTHREAD_MUTEX_INITIALIZER;
-//pthread_cond_t cond_input; // = PTHREAD_COND_INITIALIZER;
-
-
-/*
-/// InputHandler will probe for user input through a while loop.
-void* InputHandler( void* c){
-    string* str = (string*) c;  // str should be the member data of IO module.
-    string temp_input = "";
-
-    while(1){   // begin input acquisition loop
-        if( *str=="" ){    // ready for new command
-        
-            cin >> temp_input;
-
-            if( cin.good() ){
-                pthread_mutex_lock( &mux_module_input );
-                    *str = temp_input;
-//                pthread_cond_broadcast( &cond_input);
-                pthread_mutex_unlock( &mux_module_input );
-            }
-            else{
-                cin.ignore( 1024, '\n');
-                cin.clear();
-            }
-        }
-    }
-    return 0;
-}
-*/
 
 plrsModuleInput::plrsModuleInput( plrsController* c) : plrsStateMachine(c){
-//    input = "";
-
-//    pthread_mutex_init( &mux_module_input, 0);
-//    pthread_cond_init( &cond_input, 0);
-
-//    pthread_create( &thread_input, 0, InputHandler, (void*)(&input) );
 }
+
 
 
 plrsModuleInput::~plrsModuleInput(){
-//    pthread_cancel( thread_input );
 }
+
 
 
 void plrsModuleInput::Initialize(){
@@ -67,9 +32,11 @@ void plrsModuleInput::Initialize(){
 }
 
 
+
 void plrsModuleInput::CleanUp(){
     Print( "cleaning up...\n", DETAIL);
 }
+
 
 
 void plrsModuleInput::Configure(){
@@ -88,7 +55,9 @@ void plrsModuleInput::Configure(){
 }
 
 
+
 void plrsModuleInput::ConfigDataFlow(){;}
+
 
 
 void plrsModuleInput::UnConfigure(){
@@ -96,9 +65,11 @@ void plrsModuleInput::UnConfigure(){
 }
 
 
+
 void plrsModuleInput::PreRun(){
     Print( "runing...\n", DETAIL);
 }
+
 
 
 void plrsModuleInput::Run(){
@@ -109,31 +80,55 @@ void plrsModuleInput::Run(){
 }
 
 
+
 void plrsModuleInput::PostRun(){
     Print( "ending run...\n", DETAIL);
 }
 
 
+
 void plrsModuleInput::IOHandler(){
-//    pthread_mutex_lock( &mux_module_input);
     string input = getstr();
     if( input!="" ){
         Print( "typed "+input+"\n", INFO);
         SendUserCommand( input );
         input = "";
     }
-//    pthread_mutex_unlock( &mux_module_input);
 }
+
+
 
 void plrsModuleInput::SendUserCommand( string in){
 
     if( in=="quit" || in=="q" || in=="print" )
         PushCommand( 0, in);
 
-    else{
+    string dir, par;
+
+    size_t found = in.find( "/" );
+
+    if( found != string::npos ){
+
+        size_t found2 = in.find( "/", found+1);
+
+        if( found2 != string::npos ){
+            dir = in.substr( found+1, found2-found-1);
+            par = in.substr( found2+1, string::npos);
+        }
+    }
+
+    if( dir == "" ){
         for( unsigned int i=0; i<module_table.size(); ++i){
             PushCommand( i, in);
-            //Print("Pushing command "+in+" to "+ctrl->GetNameByID(i)+"\n", DEBUG);
+        }
+    }
+    else{
+        int id = ctrl->GetIDByName( dir );
+        if( id != -1 ){
+            PushCommand( id, par);
+            stringstream st;
+            st << "Sending command " << par << " to module " + dir + " ID " << id << "\n";
+            Print( st.str(), ERR);
         }
     }
 

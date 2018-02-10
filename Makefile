@@ -44,6 +44,7 @@ install:
 	@cp ./include/*.h ${PREFIX}/include/$(NAME)
 	@cp ./lib/$(LIBNAME) ${PREFIX}/lib/
 	@cp ./${NAME} $(PREFIX)/bin/
+	@ln -sf ${PREFIX}/lib/lib${NAME}.so.${SOMAJOR} ${PREFIX}/lib/lib${NAME}.so
 	@sudo ldconfig -n ${PREFIX}/lib/lib${NAME}.so
 
 
