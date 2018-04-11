@@ -495,11 +495,11 @@ bool plrsController::ChangeState( DAQSTATE s, unsigned int wait_time){
         }
     pthread_mutex_unlock( &mux_fsm);
 
-    unsigned int time = GetTimeStamp();
+    InitializeWDTimer();
     bool consistent = true;
     bool error = false;
 
-    while( GetTimeStamp()-time<wait_time ){
+    while( GetWDTimer() > GetTimeStamp() ){
         consistent = CheckStateConsistency();
         if( consistent ){
             SetState( s );
@@ -515,8 +515,8 @@ bool plrsController::ChangeState( DAQSTATE s, unsigned int wait_time){
         }
 
         CommandHandler();
-        usleep(10*1000);
-//        sched_yield();
+        usleep(100000);
+        sched_yield();
     }
 
     Print( "Time out error\n", ERR);
@@ -615,14 +615,7 @@ void plrsController::SetState( DAQSTATE st){
 
 
 DAQSTATE plrsController::GetState(){
-
-    DAQSTATE s;
-
-    pthread_mutex_lock( &mux_state);
-        s = state;
-    pthread_mutex_unlock( &mux_state);
-
-    return s;
+    return state;
 }
 
 
@@ -642,7 +635,6 @@ bool plrsController::CheckStateConsistency(){
     pthread_mutex_unlock( &mux_fsm);
 
     return consistent;
-
 }
 
 

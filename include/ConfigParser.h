@@ -199,30 +199,37 @@ private:
     VERBOSITY verb;
 
     ofstream log;
+
+    time_t last_print;
 };
 
 
 template < class T >
 void ConfigParser::Print( T t, VERBOSITY v){
-    pthread_mutex_lock( &mutex_cout);
-        time_t ct = time(0);
-        tm* tm_info = localtime(&ct);
-        if( v==ERR )
-            std::cerr << std::setfill('0') << std::setw(2) << tm_info->tm_hour <<":"
+    if( verb>=v ){
+        pthread_mutex_lock( &mutex_cout);
+            time_t ct = time(0);
+
+            if( last_print == ct){
+                std::cout << "          " << t<< std::setfill(' ') << std::setw(0);
+                if( log )
+                    log << "          " << t<< std::setfill(' ') << std::setw(0);
+            }
+            else{
+                last_print = ct;
+                tm* tm_info = localtime(&ct);
+                std::cout << std::setfill('0') << std::setw(2) << tm_info->tm_hour <<":"
                           << std::setfill('0') << std::setw(2) << tm_info->tm_min << ":"
                           << std::setfill('0') << std::setw(2) << tm_info->tm_sec << "  " << t
                           << std::setfill(' ') << std::setw(0);
-        else if( verb >= v )
-            std::cout << std::setfill('0') << std::setw(2) << tm_info->tm_hour <<":"
-                          << std::setfill('0') << std::setw(2) << tm_info->tm_min << ":"
-                          << std::setfill('0') << std::setw(2) << tm_info->tm_sec << "  " << t
-                          << std::setfill(' ') << std::setw(0);
-        if( log && (verb >= v) )
-            log << std::setfill('0') << std::setw(2) << tm_info->tm_hour <<":"
-                          << std::setfill('0') << std::setw(2) << tm_info->tm_min << ":"
-                          << std::setfill('0') << std::setw(2) << tm_info->tm_sec << "  " << t
-                          << std::setfill(' ') << std::setw(0);
-    pthread_mutex_unlock( &mutex_cout);
+                if( log )
+                    log << std::setfill('0') << std::setw(2) << tm_info->tm_hour <<":"
+                        << std::setfill('0') << std::setw(2) << tm_info->tm_min << ":"
+                        << std::setfill('0') << std::setw(2) << tm_info->tm_sec << "  " << t
+                        << std::setfill(' ') << std::setw(0);
+            }
+        pthread_mutex_unlock( &mutex_cout);
+    }
 }
 
 

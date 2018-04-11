@@ -12,6 +12,7 @@ using std::string;
 //! Default constructor, only initialize mutex.
 ConfigParser::ConfigParser(){
     Initialize();
+    last_print = 0;
 }
 
 

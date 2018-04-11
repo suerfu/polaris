@@ -32,10 +32,7 @@ RandomWalkGraphics::RandomWalkGraphics( plrsController* c) : plrsModuleGraphics(
 }
 
 
-RandomWalkGraphics::~RandomWalkGraphics(){
-//    if( app!=0 )
-//        delete app;
-}
+RandomWalkGraphics::~RandomWalkGraphics(){}
 
 
 void RandomWalkGraphics::Configure(){
@@ -52,14 +49,14 @@ void RandomWalkGraphics::Configure(){
 
 
 void RandomWalkGraphics::UnConfigure(){
-    if( graph!=0 )
-        delete graph;
-    if( canvas!=0 )
-        delete canvas;
-    if( line!=0 )
-        delete line;
-    if( box!=0 )
-        delete box;
+//    if( canvas!=0 )
+//        delete canvas;
+//    if( graph!=0 )
+//        delete graph;
+//    if( line!=0 )
+//        delete line;
+//    if( box!=0 )
+//        delete box;
 }
 
 

@@ -100,8 +100,10 @@ void plrsModuleInput::IOHandler(){
 
 void plrsModuleInput::SendUserCommand( string in){
 
-    if( in=="quit" || in=="q" || in=="print" )
+    if( in=="quit" || in=="q" || in=="print" ){
         PushCommand( 0, in);
+        return;
+    }
 
     string dir, par;
 

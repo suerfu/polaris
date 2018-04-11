@@ -33,6 +33,17 @@ public:
     unsigned int GetTimeStamp();
         //!< Thread safe way to call time(0)  and returns time since Linux epoch.
 
+    unsigned int GetWDTimer(){ return wdtimer;}
+        //!< Returns current value of watchdog timer.
+
+    unsigned int GetWDRemainingTime(){ return wdtimer-GetTimeStamp();}
+
+    void UpdateWDTimer( unsigned int n = 2){
+        if ( wdtimer - GetTimeStamp() < n )
+            wdtimer += n;
+    }
+        // Increment watchdog timer by two seconds to allow for more time for state transition.
+
     ConfigParser* GetConfigParser();
         //!< Returns parameter map.
 
@@ -75,6 +86,11 @@ private:
         //!< keeps track of open libraries. If library is already open, return handle to it.
 
     map< string, int> module_table;
+
+    unsigned int wdtimer;
+        //!< Watchdog timer. When this timer is hit, timeout error is issued.
+
+    void InitializeWDTimer( unsigned int n = 3){ wdtimer = GetTimeStamp() + n; }
 
     // ============ DAQ state-related ====================
 

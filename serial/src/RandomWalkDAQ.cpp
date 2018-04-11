@@ -20,7 +20,6 @@ void RandomArray::Read( istream& file ){
     file.read( reinterpret_cast<char*>( array), sizeof(int)*_size);
     array[0] = 0;
     for( int i=1; i<_size; ++i)
-        //array[i] = i;
         array[i] = array[i]>=0 ? ++array[i-1] : --array[i-1];
 }
 
@@ -63,6 +62,11 @@ void RandomWalkDAQ::Configure(){
         Print( ss.str(), DEBUG);
         for( int i=0; i<buff_size; ++i )
             PushToBuffer( id, reinterpret_cast<void*>(new RandomArray( event_size )) );
+    }
+
+    if( ctrl->GetWDRemainingTime()<5 ){
+        ctrl->UpdateWDTimer( 10 );
+        sleep(2);
     }
 }   
 
