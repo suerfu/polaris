@@ -5,23 +5,30 @@
 #include <cstring>
 
 
+/// creator function for loading the module.
 extern "C" SerialDAQ* create_SerialDAQ( plrsController* c ){ return new SerialDAQ(c);}
 
 
+/// destructor function for releasing the module.
 extern "C" void destroy_SerialDAQ( SerialDAQ* p ){ delete p;}
 
 
+/// Constructor. buff_size will control depth of FIFO buffer.
 SerialDAQ::SerialDAQ( plrsController* ctrl) : plrsModuleDAQ( ctrl){
     buff_size = 1000;
 }
 
 
+/// Destructor. Nothing needs to be done.
 SerialDAQ::~SerialDAQ(){}
 
 
+
 void SerialDAQ::Configure(){
+
     Print("Configuring serial port...\n", DETAIL);
 
+    // open serial port
     string fname = cparser->GetString("/module/daq/port");
     if( fname=="" ){
         fname = "ttyS0";
@@ -36,18 +43,25 @@ void SerialDAQ::Configure(){
         return;
     }
 
-    //port.set_raw();
+    // port successfully opened.
+
     port.set_cooked();
     port.set_baud( B9600 );
 
+    Print("Serial port configured.\n", DETAIL);
+
+    // fill in circular FIFO buffer with resources.
     for( int i=0; i<buff_size; ++i ){
         int id = ctrl->GetIDByName( this->GetModuleName() );
         PushToBuffer( id, new int );
     }
-    Print("Serial port configured.\n", DETAIL);
 
-    char c[] = "/adc/freq 1000\r";
-    port.serial_write( c, strlen(c));
+
+    string freq = cparser->GetString("/module/daq/interval");
+    if( freq=="" )
+        freq = "1000";
+    freq = "/adc/freq " + freq + "\r";
+    port.serial_write( &freq[0], freq.size());
 
     Print("ADC configured.\n",DETAIL);
 }
@@ -90,18 +104,8 @@ void SerialDAQ::Event(){
         if(GetState()!=RUN)
             return;
     }
-    //cout << nbyte << " bytes read" << endl;
 
     data_in[nbyte] = '\0';
-//    int i=0;
-//    while( data_in[i]!='\0'){
-//        if(data_in[i]=='\n' || data_in[i]=='\r'){
-//            data_in[i] = '';
-//            break;
-//        }
-//        i++;
-//    }
-//    cout << "incoming data: " << data_in << endl;
 
     if( data_in[0]=='#' || data_in[0]=='/'){
         PushToBuffer( ctrl->GetIDByName(this->GetModuleName()), rdo);
@@ -109,7 +113,6 @@ void SerialDAQ::Event(){
     }
     else{
         *(reinterpret_cast<int*>(rdo)) = atoi(data_in);
-        cout << atoi(data_in) <<'\t' << int(data_in[0]) <<endl;
         PushToBuffer( addr_nxt, rdo);
     }
 }

@@ -11,8 +11,9 @@ extern "C" void destroy_RandomWalkDAQ( RandomWalkDAQ* p ){ delete p;}
 
 
 RandomWalkDAQ::RandomWalkDAQ( plrsController* c) : plrsModuleDAQ(c){
-    buff_size = 1000;
-    sample_intv = 100000;
+    buff_size = 100;
+    sample_intv = 1000000;
+    current_value = 0;
 }
 
 
@@ -50,7 +51,16 @@ void RandomWalkDAQ::Event(){
     void* p = PullFromBuffer( RUN );
 
     if( p!=0 ){
-        file.read( reinterpret_cast<char*>( p ), sizeof(int));
+        char* c = reinterpret_cast<char*>( p );
+        int* a = reinterpret_cast<int*>( p );
+
+        file.read( c, sizeof(char));
+        if( *c%2==0 )
+            current_value++;
+        else
+            current_value--;
+
+        *a = current_value;
         PushToBuffer( addr_nxt, p );
     }
     usleep( sample_intv );

@@ -6,7 +6,7 @@ plrsModuleGraphics::plrsModuleGraphics( plrsController* c ) : plrsStateMachine( 
     now = 0;
     last_update = 0;
     pause = false;
-    refresh_rate = 1;
+    refresh_rate = ctrl->GetInt("refresh_rate", 1);
 }
 
 
@@ -38,12 +38,12 @@ void plrsModuleGraphics::PreEvent(){}
 void plrsModuleGraphics::PostEvent(){}
     // can be used to update the graphics if necessary
 
-
 void plrsModuleGraphics::Event(){
 
     rdo = PullFromBuffer( RUN );
  
     if( rdo!=0){
+        Process( rdo );
         if( !pause ){
             // if pause is not true, check refresh_rate and redraw.
             now = ctrl->GetTimeStamp();

@@ -35,7 +35,9 @@ protected:
 
     virtual void CommandHandler();
 
-    virtual void Draw( void* p) = 0;
+    virtual void Process( void* p){}
+    
+    virtual void Draw( void* p){}
 
 private:
 

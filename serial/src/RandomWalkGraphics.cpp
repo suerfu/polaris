@@ -7,6 +7,7 @@
 
 #include "TSystem.h"
 #include "TMultiGraph.h"
+#include "TAxis.h"
 
 TMultiGraph* graphs = new TMultiGraph();
 
@@ -48,14 +49,6 @@ void RandomWalkGraphics::Configure(){
 
 
 void RandomWalkGraphics::UnConfigure(){
-//    if( canvas!=0 )
-//        delete canvas;
-//    if( graph!=0 )
-//        delete graph;
-//    if( line!=0 )
-//        delete line;
-//    if( box!=0 )
-//        delete box;
 }
 
 
@@ -70,15 +63,23 @@ void RandomWalkGraphics::Clear(){
 }
 
 
+
 void RandomWalkGraphics::PreRun(){
-    start_time = ctrl->GetTimeStamp();
+    start_time = std::chrono::high_resolution_clock::now();//ctrl->GetTimeStamp();
 }
 
+
+
 void RandomWalkGraphics::PreEvent(){
-    if( canvas==0 )
+    if( canvas==0 ){
         canvas = new TCanvas("Random Walk Pattern");
-    if( graph==0 )
+        canvas->SetTitle("Random Walk Demo");
+    }
+    if( graph==0 ){
         graph = new TGraph();
+        graph->SetTitle( "Random Walk Demo" );
+        graph->GetXaxis()->SetTitle( "Time since start (s)" );
+    }
     if( x_array.size()>2*x_size ){
         x_array.erase( x_array.begin(), x_array.begin()+x_array.size()-x_size);
     }
@@ -89,18 +90,19 @@ void RandomWalkGraphics::PreEvent(){
 
 
 
+void RandomWalkGraphics::Process( void* rdo ){
+
+    int t = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count();
+    x_array.push_back( t/1000.  );
+    y_array.push_back( *(reinterpret_cast<int*>( rdo ))  );
+}
+
+
 void RandomWalkGraphics::Draw( void* rdo ){
 
-    if( rdo!=0 ){
-        x_array.push_back( ctrl->GetTimeStamp() - start_time  );
-        y_array.push_back( *(reinterpret_cast<int*>( rdo ))  );
-
-        unsigned int size = x_array.size() < x_size ? x_array.size() : x_size;
-        cout << "x-size is "<< x_array.size() << endl;
-    
-        if( size>0 )
-            graph->DrawGraph( size, &x_array[x_array.size()-size], &y_array[y_array.size()-size], "AC");
-    }
+    unsigned int size = x_array.size() < x_size ? x_array.size() : x_size;
+    if( size>0 )
+        graph->DrawGraph( size, &x_array[x_array.size()-size], &y_array[y_array.size()-size], "APL");
 }
 
 

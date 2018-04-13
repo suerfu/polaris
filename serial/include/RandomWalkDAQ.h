@@ -41,6 +41,8 @@ private:
     int buff_size;
 
     int sample_intv;
+
+    int current_value;
 };
 
 
