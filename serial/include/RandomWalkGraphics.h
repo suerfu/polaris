@@ -4,6 +4,8 @@
 #include "plrsModuleGraphics.h"
 #include "RandomWalkDAQ.h"
 
+#include <vector>
+
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TGraph.h"
@@ -31,6 +33,8 @@ protected:
     void CleanUp();
         //!< Called when module goes into END state from RUN 
 
+    void PreRun();
+
     void PreEvent();
 
     void Draw( void* p);
@@ -50,9 +54,13 @@ private:
     TGraph* graph;
         // ROOT graph object
 
-    TBox* box;
+    unsigned int x_size;
 
-    TLine* line;
+    unsigned int start_time;
+
+    std::vector<Int_t> x_array;
+    
+    std::vector<Int_t> y_array;
 };
 
 extern "C" RandomWalkGraphics* create_RandomWalkGraphics( plrsController* c);

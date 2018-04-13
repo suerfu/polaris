@@ -4,7 +4,7 @@
 #include "plrsStateMachine.h"
 
 
-class plrsModuleGraphics : plrsStateMachine {
+class plrsModuleGraphics : public plrsStateMachine {
 
 public:
 
