@@ -13,20 +13,22 @@
 class SerialDAQ : public plrsModuleDAQ {
 
 public:
+
     SerialDAQ( plrsController* ctrl);
 
     ~SerialDAQ();
 
 protected:
+
     void Configure();
 
     void UnConfigure();
 
     void CleanUp();
 
-    void StartDAQ();
+    void PreRun();
 
-    void StopDAQ();
+    void PostRun();
 
     void PreEvent();
 

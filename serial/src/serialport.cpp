@@ -18,7 +18,7 @@ serialport::~serialport(){
 
 void serialport::set_baud( speed_t rate = B9600){
     if( handle>=0){
-        cfsetispeed( &setting, rate);
+        cfsetspeed( &setting, rate);
         apply();
     }
 }
@@ -42,12 +42,29 @@ void serialport::set_raw( ){
     cfmakeraw( &setting);
     set_iflag( IGNPAR, true);
 
-    set_spchar( VTIME, 1);
+    set_spchar( VTIME, 2);
     set_spchar( VMIN, 1);
 
     apply();
 }
 
+
+
+void serialport::set_cooked(){
+    setting.c_iflag &= ~ ( INPCK | ISTRIP | INLCR | ICRNL | IGNCR | IXON | IXOFF);
+        // don't inspect parity, do not strip bit, don't translate CR or NL
+    setting.c_iflag |= (IGNBRK + IGNPAR );
+
+    setting.c_oflag &= ~OPOST;
+
+    setting.c_cflag &= ~( PARENB | CSTOP | CLOCAL | CSIZE);
+    setting.c_cflag |= ( CREAD | CS8 );
+
+    setting.c_lflag &= ~ ( ECHO );
+    setting.c_lflag |= ICANON;
+
+    apply();
+}
 
 
 void serialport::set_iflag( tcflag_t flag, bool on){
