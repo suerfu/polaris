@@ -2,6 +2,9 @@
 
 #include <sstream>
 #include <iostream>
+#include <cstring>
+
+
 extern "C" SerialDAQ* create_SerialDAQ( plrsController* c ){ return new SerialDAQ(c);}
 
 
@@ -10,9 +13,6 @@ extern "C" void destroy_SerialDAQ( SerialDAQ* p ){ delete p;}
 
 SerialDAQ::SerialDAQ( plrsController* ctrl) : plrsModuleDAQ( ctrl){
     buff_size = 1000;
-        // will create 100 buffer data
-    sampling_period = 100;
-        // sampling period in ms
 }
 
 
@@ -20,7 +20,7 @@ SerialDAQ::~SerialDAQ(){}
 
 
 void SerialDAQ::Configure(){
-    Print("configuring serial port for DAQ\n", DETAIL);
+    Print("Configuring serial port...\n", DETAIL);
 
     string fname = cparser->GetString("/module/daq/port");
     if( fname=="" ){
@@ -30,26 +30,32 @@ void SerialDAQ::Configure(){
     else
         Print( "opening "+fname+" for data acquisition\n", DETAIL);
 
-    if( port.serial_open( fname.c_str() )<0 ){
-        Print( "Error: "+port.get_errmsg()+"\n", ERR);
+    if( port.serial_open( fname.c_str() )!=0 ){
+        Print( "Error - "+port.get_errmsg()+"\n", ERR);
         SetStatus( ERROR );
         return;
     }
 
-    port.set_raw();
+    //port.set_raw();
+    port.set_cooked();
     port.set_baud( B9600 );
-    port.set_iflag( IGNPAR, true);
 
     for( int i=0; i<buff_size; ++i ){
         int id = ctrl->GetIDByName( this->GetModuleName() );
         PushToBuffer( id, new int );
     }
-    Print("serial DAQ module configured.\n", DETAIL);
+    Print("Serial port configured.\n", DETAIL);
+
+    char c[] = "/adc/freq 1000\r";
+    port.serial_write( c, strlen(c));
+
+    Print("ADC configured.\n",DETAIL);
 }
 
 
 
 void SerialDAQ::UnConfigure(){
+    Print( "Closing serial port...\n", DETAIL);
     port.serial_close();
 }
 
@@ -57,9 +63,7 @@ void SerialDAQ::UnConfigure(){
 
 void SerialDAQ::CleanUp(){
 
-    Print( "cleaning up...\n", DETAIL);
-
-    port.serial_close();
+    Print( "Cleaning up...\n", DETAIL);
 
     void* rdo = PullFromBuffer();
     while( rdo!=0 ){
@@ -72,53 +76,58 @@ void SerialDAQ::CleanUp(){
 
 
 void SerialDAQ::Event(){
-    char msb(0), lsb(0);
 
     void* rdo = 0;
-
     rdo = PullFromBuffer( RUN );
-
     if( rdo==0 )
         return;
 
-    while( port.serial_read( &lsb, 1)<0 ){
+    char data_in[64];
+    data_in[0] = 64;
+
+    int nbyte = 0;
+    while( ( nbyte = port.serial_read( data_in, 64) )<=0 ){
         if(GetState()!=RUN)
             return;
-//			std::cout << std::hex << unsigned(lsb&0x3f) << std::endl;
-		if( (lsb&0xc0)!=0x0 )
-			continue;
     }
-    while( port.serial_read( &msb, 1)<0 ){
-        if(GetState()!=RUN)
-            return;
-		if( (msb&0xc0)!=0xc0 )
-			continue;
+    //cout << nbyte << " bytes read" << endl;
+
+    data_in[nbyte] = '\0';
+//    int i=0;
+//    while( data_in[i]!='\0'){
+//        if(data_in[i]=='\n' || data_in[i]=='\r'){
+//            data_in[i] = '';
+//            break;
+//        }
+//        i++;
+//    }
+//    cout << "incoming data: " << data_in << endl;
+
+    if( data_in[0]=='#' || data_in[0]=='/'){
+        PushToBuffer( ctrl->GetIDByName(this->GetModuleName()), rdo);
+        return;
     }
-//			std::cout << "lsb: "<< std::hex << unsigned(lsb&0x3f) << std::endl;
-
-    int * a = ( reinterpret_cast< int* > ( rdo ));
-    *a = ( lsb&0x3f ) + (int( msb<<6) & 0xfc0);
-
-    PushToBuffer( addr_nxt, rdo);
+    else{
+        *(reinterpret_cast<int*>(rdo)) = atoi(data_in);
+        cout << atoi(data_in) <<'\t' << int(data_in[0]) <<endl;
+        PushToBuffer( addr_nxt, rdo);
+    }
 }
 
 
-void SerialDAQ::StartDAQ(){
+void SerialDAQ::PreRun(){
     Print( "DAQ starting\n", DETAIL);
 
-    stringstream s;
-    s << "DAQ will push data to " << ctrl->GetNameByID(addr_nxt) << endl;
-    Print( s.str(), DETAIL);
-
-    char c = 0x1;
-    port.serial_write( &c, 1);
+    char c[] = "/adc/on\r";
+    port.serial_write( c, strlen(c));
 }
 
 
-void SerialDAQ::StopDAQ(){
-    char c = 0xff;
-    port.serial_write( &c, 1);
-    Print( "DAQ Stopped\n", DETAIL);
+void SerialDAQ::PostRun(){
+    Print( "DAQ stopping\n", DETAIL);
+
+    char c[] = "/adc/off\r";
+    port.serial_write( c, strlen(c) );
 }
 
 

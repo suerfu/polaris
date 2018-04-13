@@ -23,6 +23,9 @@ public:
 
     int serial_close();
         // return 0 on success.
+    
+    void set_cooked();
+        // configure port for text applications
 
     void set_raw();
         // configure port for raw mode
