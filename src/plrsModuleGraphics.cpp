@@ -6,7 +6,7 @@ plrsModuleGraphics::plrsModuleGraphics( plrsController* c ) : plrsStateMachine( 
     now = 0;
     last_update = 0;
     pause = false;
-    refresh_rate = ctrl->GetInt("refresh_rate", 1);
+    refresh_rate = cparser->GetInt("refresh_rate", 1);
 }
 
 

@@ -1,5 +1,5 @@
-#ifndef RANDOMWALKRECORDER_H
-    #define RANDOMWALKRECORDER_H 1
+#ifndef VTRECORDER_H
+    #define VTRECORDER_H 1
 
 #include <string>
 
@@ -19,25 +19,27 @@
 /// --- search if there is graphics module
 /// --- send data back to controller.
 
-/// 3) default behavior of Run module is keep asking buffer for data and call Write method to write them on disk.
+/// 3) default behavior of Run module is to interpret incoming void pointer as array of two floats and writes them separately in two columns.
 
-class RandomWalkRecorder : public plrsModuleRecorder{
+class VtRecorder : public plrsModuleRecorder{
 
 public:
 
-    RandomWalkRecorder( plrsController* c);    //!< Constructor.
+    VtRecorder( plrsController* c);    //!< Constructor.
 
-    virtual ~RandomWalkRecorder();  //!< Destructor
+    virtual ~VtRecorder();  //!< Destructor
 
 protected:
+
+    virtual void PreRun();
 
     virtual void Run();
 
 };
 
-extern "C" RandomWalkRecorder* create_RandomWalkRecorder( plrsController* c);
+extern "C" VtRecorder* create_VtRecorder( plrsController* c);
 
-extern "C" void destroy_RandomWalkRecorder( RandomWalkRecorder* p );
+extern "C" void destroy_VtRecorder( VtRecorder* p );
 
 
 #endif

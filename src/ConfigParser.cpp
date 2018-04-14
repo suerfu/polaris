@@ -728,14 +728,14 @@ bool ConfigParser::Find( const string& name) {
 
 
 
-void ConfigParser::Print( ostream& os){
+void ConfigParser::Print( ostream& os, string prefix){
     map< string, map< string, vector<string> > >::iterator itr;
     for( itr=parameters.begin(); itr!=parameters.end(); ++itr){
-        os << itr->first << endl;
+        os << prefix << itr->first << endl;
 
         map<string, vector<string> >::iterator itr2;
         for( itr2=(itr->second).begin(); itr2!=(itr->second).end(); ++itr2){
-            os << "  |- " << itr2->first << "    ";
+            os << prefix << "  |- " << itr2->first << "    ";
             vector<string>::iterator itr3;
             for( itr3=itr2->second.begin(); itr3!= itr2->second.end(); ++itr3){
                 os << *itr3 << ", ";

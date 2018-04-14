@@ -1,5 +1,5 @@
-#ifndef SERIALDAQ_H
-    #define SERIALDAQ_H 1
+#ifndef SERIALVTDAQ_H
+    #define SERIALVTDAQ_H 1
 
 // system libraries
 #include <fstream>
@@ -14,21 +14,21 @@
 #include "plrsController.h"
 
 
-/// SerialDAQ is a module for reading data from serial port.
+/// SerialVtDAQ is a module for reading data from serial port.
 /// It uses a simple protocol for ADC:
 ///     /adc/{freq N, on, off}
 /// freq parameter will change the sampling frequency N, which is given as interval in ms between sampling.
 /// on and off will turn the adc on and off
 /// By default the hardware device has echo enabled, so it is necessary to mark messages sent to the device by delimiters ( #, /, (space)) so that echoed messages can be identified.
 
-class SerialDAQ : public plrsModuleDAQ {
+class SerialVtDAQ : public plrsModuleDAQ {
 
 public:
 
-    SerialDAQ( plrsController* ctrl);
+    SerialVtDAQ( plrsController* ctrl);
         //!< Constructor
 
-    ~SerialDAQ();
+    ~SerialVtDAQ();
         //!< Destructor
 
 protected:
@@ -60,16 +60,18 @@ protected:
 
 private:
 
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
+
     serialport port;
 
-    int buff_size;
+    int buff_depth;
 
     int sampling_period;
 };
 
 
-extern "C" SerialDAQ* create_SerialDAQ( plrsController* c);
+extern "C" SerialVtDAQ* create_SerialVtDAQ( plrsController* c);
 
-extern "C" void destroy_SerialDAQ( SerialDAQ* p );
+extern "C" void destroy_SerialVtDAQ( SerialVtDAQ* p );
 
 #endif

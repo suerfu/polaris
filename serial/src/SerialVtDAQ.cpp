@@ -1,4 +1,4 @@
-#include "SerialDAQ.h"
+#include "SerialVtDAQ.h"
 
 #include <sstream>
 #include <iostream>
@@ -6,25 +6,25 @@
 
 
 /// creator function for loading the module.
-extern "C" SerialDAQ* create_SerialDAQ( plrsController* c ){ return new SerialDAQ(c);}
+extern "C" SerialVtDAQ* create_SerialVtDAQ( plrsController* c ){ return new SerialVtDAQ(c);}
 
 
 /// destructor function for releasing the module.
-extern "C" void destroy_SerialDAQ( SerialDAQ* p ){ delete p;}
+extern "C" void destroy_SerialVtDAQ( SerialVtDAQ* p ){ delete p;}
 
 
-/// Constructor. buff_size will control depth of FIFO buffer.
-SerialDAQ::SerialDAQ( plrsController* ctrl) : plrsModuleDAQ( ctrl){
-    buff_size = 1000;
+/// Constructor. buff_depth will control depth of FIFO buffer.
+SerialVtDAQ::SerialVtDAQ( plrsController* ctrl) : plrsModuleDAQ( ctrl){
+    buff_depth = 20;
 }
 
 
 /// Destructor. Nothing needs to be done.
-SerialDAQ::~SerialDAQ(){}
+SerialVtDAQ::~SerialVtDAQ(){}
 
 
 
-void SerialDAQ::Configure(){
+void SerialVtDAQ::Configure(){
 
     Print("Configuring serial port...\n", DETAIL);
 
@@ -48,18 +48,22 @@ void SerialDAQ::Configure(){
     port.set_cooked();
     port.set_baud( B9600 );
 
-    Print("Serial port configured.\n", DETAIL);
+    Print("SerialVt port configured.\n", DETAIL);
 
     // fill in circular FIFO buffer with resources.
-    for( int i=0; i<buff_size; ++i ){
+    for( int i=0; i<buff_depth; ++i ){
         int id = ctrl->GetIDByName( this->GetModuleName() );
-        PushToBuffer( id, new int );
+        if( sizeof(int)>=sizeof(float) )
+            PushToBuffer( id, new int[2] );
+        else
+            PushToBuffer( id, new float[2] );
+            // one for time in milisecond and the other for average voltage value
     }
 
 
-    string freq = cparser->GetString("/module/daq/interval");
+    string freq = cparser->GetString("/module/daq/sample_interval");
     if( freq=="" )
-        freq = "1000";
+        freq = "20";
     freq = "/adc/freq " + freq + "\r";
     port.serial_write( &freq[0], freq.size());
 
@@ -68,14 +72,14 @@ void SerialDAQ::Configure(){
 
 
 
-void SerialDAQ::UnConfigure(){
+void SerialVtDAQ::UnConfigure(){
     Print( "Closing serial port...\n", DETAIL);
     port.serial_close();
 }
 
 
 
-void SerialDAQ::CleanUp(){
+void SerialVtDAQ::CleanUp(){
 
     Print( "Cleaning up...\n", DETAIL);
 
@@ -88,8 +92,22 @@ void SerialDAQ::CleanUp(){
 }
 
 
+void SerialVtDAQ::PreRun(){
+    Print( "DAQ starting\n", DETAIL);
 
-void SerialDAQ::Event(){
+    start_time = std::chrono::high_resolution_clock::now();
+
+    char c[] = "/adc/on\r";
+    port.serial_write( c, strlen(c));
+}
+
+
+
+void SerialVtDAQ::PreEvent(){}
+
+
+
+void SerialVtDAQ::Event(){
 
     void* rdo = 0;
     rdo = PullFromBuffer( RUN );
@@ -104,6 +122,8 @@ void SerialDAQ::Event(){
         if(GetState()!=RUN)
             return;
     }
+    
+    int t = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count();
 
     data_in[nbyte] = '\0';
 
@@ -112,21 +132,19 @@ void SerialDAQ::Event(){
         return;
     }
     else{
-        *(reinterpret_cast<int*>(rdo)) = atoi(data_in);
+        reinterpret_cast<int*>(rdo)[0] = t;
+        reinterpret_cast<int*>(rdo)[1] = atoi(data_in);
         PushToBuffer( addr_nxt, rdo);
     }
 }
 
 
-void SerialDAQ::PreRun(){
-    Print( "DAQ starting\n", DETAIL);
 
-    char c[] = "/adc/on\r";
-    port.serial_write( c, strlen(c));
-}
+void SerialVtDAQ::PostEvent(){}
 
 
-void SerialDAQ::PostRun(){
+
+void SerialVtDAQ::PostRun(){
     Print( "DAQ stopping\n", DETAIL);
 
     char c[] = "/adc/off\r";
@@ -134,7 +152,4 @@ void SerialDAQ::PostRun(){
 }
 
 
-void SerialDAQ::PreEvent(){}
 
-
-void SerialDAQ::PostEvent(){}

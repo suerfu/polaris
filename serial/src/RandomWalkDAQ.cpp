@@ -11,7 +11,7 @@ extern "C" void destroy_RandomWalkDAQ( RandomWalkDAQ* p ){ delete p;}
 
 
 RandomWalkDAQ::RandomWalkDAQ( plrsController* c) : plrsModuleDAQ(c){
-    buff_size = 100;
+    buff_depth = 100;
     sample_intv = 1000000;
     current_value = 0;
 }
@@ -21,22 +21,23 @@ RandomWalkDAQ::~RandomWalkDAQ(){}
 
 
 void RandomWalkDAQ::Configure(){
-    // open file for accessing random number
+    
     Print( "Opening /dev/urandom\n", DEBUG);
     file.open("/dev/urandom");
     
-    // if failed to open file, exit; otherwise allocate memory.
     if(!file){
         Print( "Error: failed to open /dev/random\n", ERR);
         SetStatus(ERROR);
     }
     else{
         int id = ctrl->GetIDByName( this->GetModuleName() );
+
         stringstream ss;
         ss << this->GetModuleName()+" has ID " << id << "\n";
         Print( ss.str(), DEBUG);
-        for( int i=0; i<buff_size; ++i )
-            PushToBuffer( id, reinterpret_cast<void*>(new int ) );
+
+        for( int i=0; i<buff_depth; ++i )
+            PushToBuffer( id, reinterpret_cast<void*>(new int[4] ) );
     }
 }   
 
@@ -53,6 +54,7 @@ void RandomWalkDAQ::Event(){
     if( p!=0 ){
         char* c = reinterpret_cast<char*>( p );
         int* a = reinterpret_cast<int*>( p );
+        float* f = reinterpret_cast<float*>( reinterpret_cast<int*>(p)+sizeof(int));
 
         file.read( c, sizeof(char));
         if( *c%2==0 )
@@ -60,7 +62,9 @@ void RandomWalkDAQ::Event(){
         else
             current_value--;
 
-        *a = current_value;
+        a[0] = 1000*(ctrl->GetTimeStamp() - start_time);
+        f[0] = current_value;
+
         PushToBuffer( addr_nxt, p );
     }
     usleep( sample_intv );
@@ -70,7 +74,9 @@ void RandomWalkDAQ::PreEvent(){}
 
 void RandomWalkDAQ::PostEvent(){}
 
-void RandomWalkDAQ::StartDAQ(){;}
+void RandomWalkDAQ::PreRun(){
+    start_time = ctrl->GetTimeStamp();
+;}
 
 void RandomWalkDAQ::StopDAQ(){;}
 
@@ -79,7 +85,7 @@ void RandomWalkDAQ::CleanUp(){
     void* p = PullFromBuffer();
 
     while( p!=0 ){
-        delete reinterpret_cast<int*>(p);
+        delete [] reinterpret_cast<int*>(p);
         p = PullFromBuffer();
     }
 }

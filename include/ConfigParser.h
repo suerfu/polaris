@@ -148,7 +148,7 @@ public:
     map< string, map<string, vector<string> > >::const_reverse_iterator crbegin();
     map< string, map<string, vector<string> > >::const_reverse_iterator crend();
 
-    void Print( ostream& os);
+    void Print( ostream& os, string prefix = "");
 
     void Print();
 

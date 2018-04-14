@@ -22,7 +22,7 @@ protected:
 
     void CleanUp();
 
-    void StartDAQ();
+    void PreRun();
 
     void StopDAQ();
 
@@ -36,11 +36,11 @@ private:
 
     ifstream file;
 
-    int event_size;
-
-    int buff_size;
+    unsigned int start_time;
 
     int sample_intv;
+
+    int buff_depth;
 
     int current_value;
 };

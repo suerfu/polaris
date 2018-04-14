@@ -1,8 +1,7 @@
-#ifndef RANDOMWALKGRAPHICS_H
-    #define RANDOMWALKGRAPHICS_H 1
+#ifndef VTGRAPHICS_H
+    #define VTGRAPHICS_H 1
 
 #include "plrsModuleGraphics.h"
-#include "RandomWalkDAQ.h"
 
 #include <vector>
 #include <chrono>
@@ -10,25 +9,23 @@
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TGraph.h"
-#include "TBox.h"
-#include "TLine.h"
 
 
-/// RandomWalkGraphics module uses ROOT to visualize time-series data ( with second resolution).
+/// VtGraphics module uses ROOT to visualize time-series data ( with second resolution).
 /// The module expects single integer data to be sent from previous module.
 /// Internally it contains two vectors of type int with twice as large capacity as requested.
 /// It will continuously push new data to back and plotting is done at different starting locations.
 /// Once incoming data fills up all spaces, vector will erase previous members once.
 
-class RandomWalkGraphics : public plrsModuleGraphics{
+class VtGraphics : public plrsModuleGraphics{
 
 public:
 
-    RandomWalkGraphics( plrsController* h );
+    VtGraphics( plrsController* h );
         //!< Constructor. Upon creation, it will register in Controller and obtain an ID.
         //!< The default state will be INIT.
     
-    ~RandomWalkGraphics();
+    ~VtGraphics();
         //!< Destructor. It will remove it's own pointer from Controller.
 
 protected:
@@ -40,9 +37,6 @@ protected:
 
     void CleanUp();
         //!< Called when module goes into END state from RUN 
-
-    void PreRun();
-        //!< Obtain a time stamp that marks the beginning of a run.
 
     void PreEvent();
         //!< Will configure canvas and graphs. If vector is full, it will also erase previous elements and reallocates.
@@ -72,16 +66,13 @@ private:
 
     unsigned int x_size;
 
-    // unsigned int start_time;
-    std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
-
     std::vector<Float_t> x_array;
     
     std::vector<Float_t> y_array;
 };
 
-extern "C" RandomWalkGraphics* create_RandomWalkGraphics( plrsController* c);
+extern "C" VtGraphics* create_VtGraphics( plrsController* c);
 
-extern "C" void destroy_RandomWalkGraphics( RandomWalkGraphics* p);
+extern "C" void destroy_VtGraphics( VtGraphics* p);
 
 #endif
