@@ -1,5 +1,6 @@
 #include "plrsController.h"
 #include "plrsModuleInput.h"
+#include "plrsModuleInterface.h"
 
 #include <cstdlib>
 #include <unistd.h>
@@ -36,7 +37,7 @@ plrsController::plrsController( ConfigParser* m) : cparser(m){
     module_table[ "ctrl" ] = 0;
 
     if( !cparser->GetBool("/cmdl/disable-input", false) ){
-        InsModule( new plrsModuleInput( this ) );
+        InsModule( new plrsModuleInput( this ), "input" );
     }
 
     start_time = 0;
@@ -125,13 +126,13 @@ void plrsController::StateLoop(){
                     }
                 }
                 else if( nxt==END ){
-                    Print( "Cleaning up modules...\n", INFO);
+                    Print( "Deinitializing modules...\n", INFO);
                     if( !ChangeState( END ) ){
                         Print( "Error cleaning up modules\n\n", ERR);
                         SetState( ERROR );
                     }
                     else{
-                        Print( "Modules cleaned up\n\n", INFO);
+                        Print( "Modules deinitialized\n\n", INFO);
                     }
                 }
                 else{
@@ -156,13 +157,13 @@ void plrsController::StateLoop(){
                     }
                 }
                 else if( nxt==INIT ){
-                    Print( "Unconfiguring modules...\n", INFO);
+                    Print( "Deconfiguring modules...\n", INFO);
                     if( !ChangeState( INIT ) ){
                         Print( "Error unconfiguring modules\n\n", ERR);
                         SetState( ERROR );
                     }
                     else{
-                        Print( "Modules unconfigured\n\n", INFO);
+                        Print( "Modules deconfigured\n\n", INFO);
                     }
                 }
                 else{
@@ -205,6 +206,7 @@ void plrsController::StateLoop(){
             default:
                 break;
         }
+        sleep(1);
         CommandHandler();
         sched_yield();
     }
@@ -244,9 +246,8 @@ void plrsController::LoadModules(){
 
             string libname = cparser->GetString( itr->first+"lib");
             if( libname=="" ){
-                Print( "Error: "+cparser->GetString( itr->first)+" no library name is specified", ERR);
-                ChangeState( ERROR );
-                return;
+                Print( "Warning: "+cparser->GetString( itr->first)+" no library name is specified. Using libpolaris as default", DETAIL);
+                libname = "libpolaris.so";
             }
 
             string fcnname = cparser->GetString( itr->first+"fcn");
@@ -256,7 +257,9 @@ void plrsController::LoadModules(){
                 return;
             }
 
-            InsModule( libname, fcnname);
+            size_t end = itr->first.find_last_of('/');
+            size_t beg = itr->first.find_last_of('/', end-1);
+            InsModule( libname, fcnname, itr->first.substr( beg+1, end-beg-1) );
         }
     }
 
@@ -266,20 +269,18 @@ void plrsController::LoadModules(){
     string sp = "           ";
     for( unsigned int i=0; i<module.size(); ++i){
         if( module[i].fsm!=0 ){
-            //s.push_back( module[i].fsm->GetModuleName() );
             to_print += sp + " |-"+module[i].fsm->GetModuleName()+"\n";
         }
     }
 	to_print += "\n";
     Print( to_print, INFO);
 
-    // maybe add essential modules.
 }
 
 
 // Insert module from library.
 
-void plrsController::InsModule( const string& lib, const string& fcn ){
+void plrsController::InsModule( const string& lib, const string& fcn, const string& modname ){
 
     Module mod;
     char *error;
@@ -329,6 +330,7 @@ void plrsController::InsModule( const string& lib, const string& fcn ){
         mod.buffer_cmd = circular_buffer< string >();
 
         plrsStateMachine* new_fsm = mod.helper_creator( this );
+        new_fsm->SetModuleName( modname );
         mod.fsm = new_fsm;
 
         pthread_t* nthrd = new pthread_t;
@@ -351,7 +353,7 @@ void plrsController::InsModule( const string& lib, const string& fcn ){
 
 
 
-void plrsController::InsModule( plrsStateMachine* p ){
+void plrsController::InsModule( plrsStateMachine* p, const string& modname ){
     Module mod;
 
     mod.handle = 0;
@@ -365,6 +367,7 @@ void plrsController::InsModule( plrsStateMachine* p ){
     pthread_mutex_lock( &mux_fsm);
 
         mod.fsm = p;
+        p->SetModuleName( modname);
 
         mod.buffer = circular_buffer< void* >();
         mod.buffer_cmd = circular_buffer<string>();

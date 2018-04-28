@@ -33,9 +33,9 @@ protected:
 
     void ConfigDataFlow();
 
-	void UnConfigure();
+	void Deconfigure();
 
-    void CleanUp();
+    void Deinitialize();
 
     void PreRun();
 

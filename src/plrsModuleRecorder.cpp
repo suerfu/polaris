@@ -32,7 +32,7 @@ void plrsModuleRecorder::Configure(){
 
 
 
-void plrsModuleRecorder::UnConfigure(){
+void plrsModuleRecorder::Deconfigure(){
     if( output_file.is_open())
         output_file.close();
     Print( "unconfiguring...\n", DETAIL);
@@ -40,7 +40,7 @@ void plrsModuleRecorder::UnConfigure(){
 
 
 
-void plrsModuleRecorder::CleanUp(){
+void plrsModuleRecorder::Deinitialize(){
     if( output_file.is_open())
         output_file.close();
     Print( "cleaning up...\n", DETAIL);

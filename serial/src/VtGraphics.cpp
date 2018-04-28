@@ -43,12 +43,12 @@ void VtGraphics::Configure(){
 
 
 
-void VtGraphics::UnConfigure(){
+void VtGraphics::Deconfigure(){
 }
 
 
 
-void VtGraphics::CleanUp(){}
+void VtGraphics::Deinitialize(){}
 
 
 

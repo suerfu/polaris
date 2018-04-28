@@ -1,4 +1,4 @@
-CC = g++  #-pg # -g
+CC = g++  -g #-pg # -g
 
 NAME = polaris
 

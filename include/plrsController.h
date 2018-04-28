@@ -52,11 +52,11 @@ public:
     void LoadModules();
         //!< Load modules specified in the config file with key /module/mod_name
 
-    void InsModule( plrsStateMachine* p);
+    void InsModule( plrsStateMachine* p, const std::string& modname);
         //!< Dynamically launches a new module as a thread.
         //!< Arguments are the library that contains the module, and the name of the function.
 
-    void InsModule( const std::string& libname, const std::string& fname);
+    void InsModule( const std::string& libname, const std::string& fname, const std::string& modname);
         //!< Dynamically launches a new module as a thread.
         //!< Arguments are the library that contains the module, and the name of the function.
 

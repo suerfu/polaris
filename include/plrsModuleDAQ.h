@@ -25,29 +25,21 @@ public:
     virtual ~plrsModuleDAQ();
         //!< Destructor.
 
-    string GetModuleName(){ return "daq";}
-
 protected:
 
     virtual void Initialize();  //!< Initialize parameters and establish connections, etc.
 
-    virtual void CleanUp();     //!< Called in the END phase to deallocate resources.
-
     virtual void Configure();   //!< Do necessary hardware setup.
 
-    virtual void UnConfigure(); //!< Unset hardware setup.
+    virtual void Deinitialize();     //!< Called in the END phase to deallocate resources.
 
-//    virtual void PreRun();  //!< Called at the beginning of RUN phase. It calls StartDAQ.
+    virtual void Deconfigure(); //!< Unset hardware setup.
 
-//    virtual void StartDAQ();
-        //!< Start data acquisition.
-        //!< This function is called by base class at the beginning of a run.
+    virtual void PreRun();  //!< Starting DAQ hardware.
 
-//    virtual void PostRun(); //!< Called at the end of RUN phase. It calls StopDAQ
+    virtual void Event();   //!< Acquire one event.
 
-//    virtual void StopDAQ();
-        //!< Temporarily or permanently stop the DAQ for current run.
-        //!< This function is called by base class after each run.
+    virtual void PostRun(); //!< Stop DAQ hardware.
 
 };
 

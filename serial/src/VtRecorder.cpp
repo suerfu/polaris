@@ -38,10 +38,12 @@ void VtRecorder::Run(){
 
     while( GetState()==RUN ){
 
-        rdo = PullFromBuffer( RUN );
+        rdo = PullFromBuffer();
 
-        if( rdo==0 )
-            break;
+        if( rdo==0 ){
+            sleep(1);
+            continue;
+        }
 
         if( output_file ){
             float* temp = reinterpret_cast<float*>(rdo);

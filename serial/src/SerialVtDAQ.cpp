@@ -72,14 +72,14 @@ void SerialVtDAQ::Configure(){
 
 
 
-void SerialVtDAQ::UnConfigure(){
+void SerialVtDAQ::Deconfigure(){
     Print( "Closing serial port...\n", DETAIL);
     port.serial_close();
 }
 
 
 
-void SerialVtDAQ::CleanUp(){
+void SerialVtDAQ::Deinitialize(){
 
     Print( "Cleaning up...\n", DETAIL);
 
@@ -103,16 +103,21 @@ void SerialVtDAQ::PreRun(){
 
 
 
-void SerialVtDAQ::PreEvent(){}
+void SerialVtDAQ::PreEvent(){
+    sleep(1);
+}
 
 
 
 void SerialVtDAQ::Event(){
 
     void* rdo = 0;
-    rdo = PullFromBuffer( RUN );
-    if( rdo==0 )
+    rdo = PullFromBuffer();
+    if( rdo==0 ){
+        sleep(1);
         return;
+    }
+        
 
     char data_in[64];
     data_in[0] = 64;

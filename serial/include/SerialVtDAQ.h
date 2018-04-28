@@ -36,10 +36,10 @@ protected:
     void Configure();
         //!< Configure method should open the serial port and configure the device for data-taking.
 
-    void UnConfigure();
+    void Deconfigure();
         //!< Close serial port.
 
-    void CleanUp();
+    void Deinitialize();
         //!< Send unsent data to next module.
 
     void PreRun();

@@ -5,6 +5,8 @@
 #include "ConfigParser.h"
 #include "plrsController.h"
 
+#include "plrsBaseData.h"
+
 using namespace std;
 
 void PrintUsage( int argc, char* argv[]);

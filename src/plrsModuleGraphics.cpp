@@ -19,11 +19,11 @@ void plrsModuleGraphics::Configure(){}
 
 
 
-void plrsModuleGraphics::UnConfigure(){}
+void plrsModuleGraphics::Deconfigure(){}
 
 
 
-void plrsModuleGraphics::CleanUp(){}
+void plrsModuleGraphics::Deinitialize(){}
 
 
 

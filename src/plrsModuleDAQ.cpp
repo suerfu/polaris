@@ -2,6 +2,8 @@
 
 #include <sstream>
 
+#include <unistd.h>
+
 
 extern "C" plrsModuleDAQ* create_plrsModuleDAQ( plrsController* c ){ return new plrsModuleDAQ(c);}
 
@@ -9,12 +11,15 @@ extern "C" plrsModuleDAQ* create_plrsModuleDAQ( plrsController* c ){ return new 
 extern "C" void destroy_plrsModuleDAQ( plrsModuleDAQ* p ){ delete p;}
 
 
+
 plrsModuleDAQ::plrsModuleDAQ( plrsController* c) : plrsStateMachine(c){
     cparser = ctrl->GetConfigParser();
 }
 
 
+
 plrsModuleDAQ::~plrsModuleDAQ(){}
+
 
 
 void plrsModuleDAQ::Initialize(){
@@ -23,7 +28,7 @@ void plrsModuleDAQ::Initialize(){
 
 
 //! Called at the end of program to clean up allocated memories.
-void plrsModuleDAQ::CleanUp(){
+void plrsModuleDAQ::Deinitialize(){
     Print( "cleaning up...\n", DETAIL);
 }
 
@@ -34,28 +39,28 @@ void plrsModuleDAQ::Configure(){
 
 
 
-void plrsModuleDAQ::UnConfigure(){
+void plrsModuleDAQ::Deconfigure(){
     Print("unconfiguring...\n", DETAIL);
 }
 
 
-/*
+
 void plrsModuleDAQ::PreRun(){
-    StartDAQ();
+    Print("starting DAQ...\n", DETAIL);
 }
+
+
+
+void plrsModuleDAQ::Event(){
+    sleep(1);
+}
+
 
 
 void plrsModuleDAQ::PostRun(){
-    StopDAQ();
+    Print("stopping DAQ...\n", DETAIL);
 }
 
 
-void plrsModuleDAQ::StartDAQ(){
-    Print( "running...\n", DETAIL);
-}
 
 
-void plrsModuleDAQ::StopDAQ(){
-    Print( "ending run...\n", DETAIL);
-}
-*/

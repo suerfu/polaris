@@ -33,7 +33,7 @@ void plrsModuleInput::Initialize(){
 
 
 
-void plrsModuleInput::CleanUp(){
+void plrsModuleInput::Deinitialize(){
     Print( "cleaning up...\n", DETAIL);
 }
 
@@ -60,7 +60,7 @@ void plrsModuleInput::ConfigDataFlow(){;}
 
 
 
-void plrsModuleInput::UnConfigure(){
+void plrsModuleInput::Deconfigure(){
     Print( "unconfiguring\n", DETAIL);
 }
 

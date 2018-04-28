@@ -35,9 +35,9 @@ protected:
 
     void Configure();
 
-	void UnConfigure();
+	void Deconfigure();
 
-    void CleanUp();
+    void Deinitialize();
 
 protected:
 

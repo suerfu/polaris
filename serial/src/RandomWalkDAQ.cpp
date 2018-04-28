@@ -41,10 +41,10 @@ void RandomWalkDAQ::Configure(){
     }
 }   
 
-void RandomWalkDAQ::UnConfigure(){
+void RandomWalkDAQ::Deconfigure(){
     Print( "Closing input file /dev/random\n", DEBUG);
     file.close();
-    CleanUp();
+    Deinitialize();
 }
 
 void RandomWalkDAQ::Event(){
@@ -80,7 +80,7 @@ void RandomWalkDAQ::PreRun(){
 
 void RandomWalkDAQ::StopDAQ(){;}
 
-void RandomWalkDAQ::CleanUp(){
+void RandomWalkDAQ::Deinitialize(){
 
     void* p = PullFromBuffer();
 

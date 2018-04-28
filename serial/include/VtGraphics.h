@@ -33,9 +33,9 @@ protected:
     void Configure();
         //!< This method will be called by controller to configure the DAQ.
 
-    void UnConfigure();
+    void Deconfigure();
 
-    void CleanUp();
+    void Deinitialize();
         //!< Called when module goes into END state from RUN 
 
     void PreEvent();

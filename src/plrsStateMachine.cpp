@@ -3,9 +3,6 @@
 #include <sstream>
 #include <unistd.h>
 
-//pthread_mutex_t plrsStateMachine::mutex_fasm = PTHREAD_MUTEX_INITIALIZER;
-    // section of codes must be protected with mutex, especially the constructor.
-
 
 
 string GetStateName( DAQSTATE state ){
@@ -17,97 +14,63 @@ string GetStateName( DAQSTATE state ){
         case RUN : return "RUN   ";
         case END : return "END   ";
         case ERROR : return "ERROR ";
-        default : return "";
+        default : return "UNKNOWN";
     }
 }
 
 
 
-plrsStateMachine::plrsStateMachine( plrsController* h ) : state(NUL), status(NUL), mutex_fasm(PTHREAD_MUTEX_INITIALIZER), ctrl(h){
+plrsStateMachine::plrsStateMachine( plrsController* h ) :  module_name("tbd"), state(NUL), status(NUL), ctrl(h) {
     cparser = h->GetConfigParser();
+    addr_prv = -1;
     addr_nxt = -1;
 }
 
 
 
-plrsStateMachine::~plrsStateMachine(){
-}
+plrsStateMachine::~plrsStateMachine(){}
 
 
 
-DAQSTATE plrsStateMachine::GetState(){
-    DAQSTATE r;
-
-    pthread_mutex_lock( &mutex_fasm);
-        r = state; 
-    pthread_mutex_unlock( &mutex_fasm);
-
-    return r;
-}
+DAQSTATE plrsStateMachine::GetState(){ return state;}
 
 
 
-DAQSTATE plrsStateMachine::GetStatus(){
-    DAQSTATE r;
-
-    pthread_mutex_lock( &mutex_fasm);
-        r = status;
-    pthread_mutex_unlock( &mutex_fasm);
-
-    return r;
-}
+DAQSTATE plrsStateMachine::GetStatus(){ return status;}
 
 
 
-void plrsStateMachine::SetState(DAQSTATE s){
-
-    pthread_mutex_lock( &mutex_fasm);
-    	if(state!=ERROR){
-	    	state = s;
-        }
-    pthread_mutex_unlock( &mutex_fasm);
-}
-
-void plrsStateMachine::SetStatus(DAQSTATE s){
-
-    pthread_mutex_lock( &mutex_fasm);
-    	if( status!=ERROR)
-	    	status = s;
-    pthread_mutex_unlock( &mutex_fasm);
-}
-// Set status will succeed unless there is error
+void plrsStateMachine::SetState(DAQSTATE s){ state = s;}
 
 
-DAQSTATE plrsStateMachine::WaitForState( DAQSTATE s, int max_try, int poll_rate){
 
+void plrsStateMachine::SetStatus(DAQSTATE s){ status = s;}
+
+
+
+DAQSTATE plrsStateMachine::WaitForState( DAQSTATE s, int max_try){
     if( s==ERROR){
         while( GetState()!=ERROR )
-            usleep(1000);
+            usleep(1000000);
         return ERROR;
     }
-
     else{
     	for( int i=0; i<max_try; i++){
 	    	if( GetState()==s)
                 return s;
-            sched_yield();
+            usleep(1000000);
         }
 	}
-
 	return ERROR;
 }
 
 
 
-int plrsStateMachine::PushToBuffer( unsigned int i, void* data ){
-    return ctrl->PushToBuffer( i, data);
-}
+int plrsStateMachine::PushToBuffer( unsigned int i, void* data ){ return ctrl->PushToBuffer( i, data);}
 
 
 
-void* plrsStateMachine::PullFromBuffer(){
-    return ctrl->PullFromBuffer( ID);
-}
+void* plrsStateMachine::PullFromBuffer(){ return ctrl->PullFromBuffer( ID);}
 
 
 
@@ -122,15 +85,11 @@ void* plrsStateMachine::PullFromBuffer( DAQSTATE st){
 
 
 
-void plrsStateMachine::PushCommand( unsigned int i, string c){
-    return ctrl->PushCommand( i, c);
-}
+void plrsStateMachine::PushCommand( unsigned int i, string c){ return ctrl->PushCommand( i, c);}
 
 
 
-string plrsStateMachine::PullCommand(){
-    return ctrl->PullCommand( ID );
-}
+string plrsStateMachine::PullCommand(){ return ctrl->PullCommand( ID );}
 
 
 
@@ -142,23 +101,22 @@ void plrsStateMachine::EventLoop(){
     bool configured = false;
     bool initialized = false;
 
+    bool invalid_transition = false;
+
     while( !ok_to_exit ){
 
         // state machine evolution: switch condition on current module's status
         // when global state changes, take certain actions and change status as well.
+
         switch( GetStatus() ){
 
             case NUL :
-
                 switch( GetState() ){
-
                     case NUL :
                         break;
-
                     case INIT :
                         Initialize();
                         initialized = true;
-
                         if( GetStatus()!=ERROR ){
                             SetStatus( INIT );
                         }
@@ -167,16 +125,11 @@ void plrsStateMachine::EventLoop(){
                             SetStatus( ERROR );
                         }
                         break;
-
                     case ERROR :    // error from other modules.
                         SetStatus( ERROR );
-                        ok_to_exit = true;
                         break;
-
                     default :
-                        Print( "invalid state transition from NULL to "+GetStateName(GetState())+"\n", ERR);
-                        SetStatus( ERROR );
-                        ok_to_exit = true;
+                        invalid_transition = true;
                         break;
                 }
                 break;
@@ -184,17 +137,13 @@ void plrsStateMachine::EventLoop(){
             case INIT :
 
                 switch( GetState() ){
-
                     case INIT :
                         break;
-
                     case CONFIG :
-
                         module_table = ctrl->GetModuleTable();
                         ConfigDataFlow(); 
                         Configure();
                         configured = true;
-
                         if( GetStatus()!=ERROR ){
                             SetStatus(CONFIG);
                         }
@@ -203,37 +152,27 @@ void plrsStateMachine::EventLoop(){
                             SetStatus( ERROR );
                         }
                         break;
-
                     case END : 
-                        CleanUp();
+                        Deinitialize();
                         initialized = false;
-
-                        ok_to_exit = true;
                         SetStatus( END );
                         break;
-
                     case ERROR : 
                         SetStatus( ERROR );
                         break;
-
                     default : 
-                        Print( "invalid state transition from INIT to "+GetStateName(GetState())+"\n", ERR);
-                        SetStatus( ERROR );
+                        invalid_transition = true;
                         break;
                 }
                 break;
 
             case CONFIG :
-
                 switch( GetState() ){
-
                     case CONFIG :
                         break;
-
                     case INIT : 
-                        UnConfigure();
+                        Deconfigure();
                         configured = false;
-
                         if( GetStatus()!=ERROR){
                             SetStatus( INIT );
                         }
@@ -242,38 +181,34 @@ void plrsStateMachine::EventLoop(){
                             SetStatus( ERROR );
                         }
                         break;
-
                     case RUN :
                         PreRun();
                         if( GetStatus()!=ERROR ){
                             SetStatus( RUN );
-                            running = true;
                         }
                         else{
                             Print( "error while starting run\n", ERR);
                             SetStatus( ERROR );
                         }
                         break;
-
                     case ERROR :
-                    default :
                         SetStatus( ERROR );
+                        break;
+                    default :
+                        invalid_transition = true;
                         break;
                 }
                 break;
 
             case RUN :
-                while( GetState()==RUN && GetStatus()!=ERROR ){
-                    Run();
-                    sched_yield();
-                }
-                if( GetStatus()==ERROR )
-                    break;
-                
+                running = true;
+                Run();
                 running = false;
 
-                switch( GetState() ){
+                if( GetStatus()==ERROR )
+                    break;
 
+                switch( GetState() ){
                     case CONFIG :
                         PostRun();
                         if( GetStatus()!=ERROR ){
@@ -284,13 +219,11 @@ void plrsStateMachine::EventLoop(){
                             SetStatus( ERROR );
                         }
                         break;
-
                     case ERROR :
-                    default :
-                        PostRun();
-                        UnConfigure();
-                        CleanUp();
                         SetStatus( ERROR );
+                        break;
+                    default :
+                        invalid_transition = true;
                         break;
                 }
                 break;
@@ -305,20 +238,23 @@ void plrsStateMachine::EventLoop(){
                 WaitForState( ERROR );  // wait for controller to realize
                 if( running )
                     PostRun();
-                if( configured)
-                    UnConfigure();
-                if( initialized)
-                    CleanUp();
+                if( configured )
+                    Deconfigure();
+                if( initialized )
+                    Deinitialize();
                 break;
 
             default:
-                Print( "invalid state transition from "+GetStateName(GetStatus())+" to "+GetStateName(GetState())+"\n", ERR);
-                ok_to_exit = true;
+                invalid_transition = true;
                 SetStatus( ERROR );
                 break;
         }
 
-        sched_yield();
+        if( invalid_transition ){
+            Print( "invalid state transition from "+GetStateName(GetStatus())+" to "+GetStateName(GetState())+"\n", ERR);
+            invalid_transition = false;
+        }
+        usleep(100000);
     }
 
     return;
@@ -330,8 +266,11 @@ void plrsStateMachine::EventLoop(){
 void plrsStateMachine::ConfigDataFlow(){
 
     string self = GetModuleName();
+
     string nxt = "";
     nxt = cparser->GetString( "/module/"+self+"/next_module" );
+    string prv = "";
+    prv = cparser->GetString( "/module/"+self+"/prev_module" );
 
     // next destination in data flow is explicitly specified.
     if( nxt!="" ){
@@ -362,11 +301,17 @@ void plrsStateMachine::GetModuleTable(){
 
 
 void plrsStateMachine::Run(){
+
     while( GetState()==RUN && GetStatus()!=ERROR ){
+
         PreEvent();
         Event();
         PostEvent();
+
         CommandHandler();
         sched_yield();
     }
 }
+
+
+

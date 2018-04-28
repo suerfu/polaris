@@ -70,13 +70,13 @@ typedef struct {
 //--INIT
 //  |-- Configure
 //--CONFIG
-//  |-- UnConfigure
+//  |-- Deconfigure
 //  |
 //  |-- PreRun
 //  |-- Run
 //  |-- PostRun
 //--END
-//  |-- CleanUp
+//  |-- Deinitialize
 
 class plrsStateMachine{
 
@@ -96,12 +96,27 @@ private:
 	int ID; //!< Obtained from controller upon registration. Used to identify different modules.
     void SetID( int i){ ID = i;}    //!< Called by controller to set FSM id.
 
+    string module_name;
+        //!< Module name. Configurable via Config Parser.
+
+    std::string GetModuleName(){
+        return module_name;
+    }
+        //!< Return module name. Used by ctrl to identify different modules.
+
+    
+    void SetModuleName( std::string s){
+        module_name = s;
+    }
+        //!< Set module name based on the directory in the configuration file.
+
+
     DAQSTATE state;     //!< Denotes state issued by controller.
 	DAQSTATE status;    //!< Current local status of the state machine.
 
 	void SetState(DAQSTATE s);  //!< Set the state of FSM. Should be accessed only by controller to change target state.
 
-	DAQSTATE WaitForState( DAQSTATE s, int max_try=2000, int poll_rate=1000);
+	DAQSTATE WaitForState( DAQSTATE s, int max_try=0xfffff );
 		//!< Will wait for designated global state to be issued. If not issued in time, signal ERROR.
 
 	void EventLoop();
@@ -145,10 +160,10 @@ protected:
     // ===================================================================================
 
     int addr_nxt;
-        //!< Address to push data to.
+        //!< Next address to push data to.
 
-    virtual std::string GetModuleName()=0;
-        //!< Return module name. Used by ctrl to identify different modules.
+    int addr_prv;
+        //!< Previous address to push data to. Needed in case data has to be rejected.
 
 
     virtual void Initialize(){}
@@ -161,10 +176,10 @@ protected:
     virtual void Configure() = 0;
         //!< Called by controller to configure the DAQ system.
 
-    virtual void UnConfigure(){}
+    virtual void Deconfigure(){}
         //!< Used to transition from Config back to Init.
 
-    virtual void CleanUp(){}
+    virtual void Deinitialize(){}
         //!< Called at the beginning of END phase.
 
 

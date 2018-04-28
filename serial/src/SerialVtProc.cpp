@@ -47,9 +47,11 @@ void SerialVtProc::Run(){
 
     while( GetState()==RUN ){
 
-        rdo = PullFromBuffer( RUN );
-        if( rdo==0 )
-            break;
+        rdo = PullFromBuffer();
+        if( rdo==0 ){
+            sleep(1);
+            continue;
+        }
 
         avg_time += reinterpret_cast<int*>(rdo)[0];
         avg_adc += reinterpret_cast<int*>(rdo)[1];

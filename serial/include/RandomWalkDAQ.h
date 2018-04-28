@@ -18,9 +18,9 @@ public:
 protected:
     void Configure();
 
-    void UnConfigure();
+    void Deconfigure();
 
-    void CleanUp();
+    void Deinitialize();
 
     void PreRun();
 
