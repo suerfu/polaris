@@ -1,5 +1,5 @@
-#ifndef VTRECORDER_H
-    #define VTRECORDER_H 1
+#ifndef ASCIIRECORDER_H
+    #define ASCIIRECORDER_H 1
 
 #include <string>
 
@@ -21,25 +21,25 @@
 
 /// 3) default behavior of Run module is to interpret incoming void pointer as array of two floats and writes them separately in two columns.
 
-class VtRecorder : public plrsModuleRecorder{
+class AsciiRecorder : public plrsModuleRecorder{
 
 public:
 
-    VtRecorder( plrsController* c);    //!< Constructor.
+    AsciiRecorder( plrsController* c);    //!< Constructor.
 
-    virtual ~VtRecorder();  //!< Destructor
+    virtual ~AsciiRecorder();  //!< Destructor
 
 protected:
 
     virtual void PreRun();
 
-    virtual void Run();
+    virtual void WriteToFile( void* );
 
 };
 
-extern "C" VtRecorder* create_VtRecorder( plrsController* c);
+extern "C" AsciiRecorder* create_AsciiRecorder( plrsController* c);
 
-extern "C" void destroy_VtRecorder( VtRecorder* p );
+extern "C" void destroy_AsciiRecorder( AsciiRecorder* p );
 
 
 #endif

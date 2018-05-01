@@ -248,7 +248,7 @@ void ConfigParser::LoadCmdl( int argc, char* argv[]){
 
     // Check for the verbosity level specified through commandline and logging.
     for( int i=1; i<argc; i++){
-        if( string( argv[i] ) == "-v" || string( argv[i] ) == "--verbose" )
+        if( string( argv[i] ) == "-v" || string( argv[i] ) == "--verbose" || string( argv[i] ) == "--detail" )
             SetVerbosity( DETAIL );
         if( string( argv[i] ) == "-q" || string( argv[i] ) == "--quiet" )
             SetVerbosity( ERR );

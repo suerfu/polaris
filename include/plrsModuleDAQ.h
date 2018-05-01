@@ -37,7 +37,7 @@ protected:
 
     virtual void PreRun();  //!< Starting DAQ hardware.
 
-    virtual void Event();   //!< Acquire one event.
+    virtual void Run();   //!< Acquire one event.
 
     virtual void PostRun(); //!< Stop DAQ hardware.
 

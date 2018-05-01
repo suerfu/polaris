@@ -1,10 +1,10 @@
-#ifndef PLRSMODULERECORDER_H
-    #define PLRSMODULERECORDER_H 1
+#ifndef RAWRECORDER_H
+    #define RAWRECORDER_H 1
 
 #include <string>
 
 #include "plrsController.h"
-#include "plrsStateMachine.h"
+#include "plrsModuleRecorder.h"
 
 /// This module writes data to file on disk.
 /// Default behavior ( if not overrided with polymorphism )
@@ -19,42 +19,25 @@
 /// --- search if there is graphics module
 /// --- send data back to controller.
 
-/// 3) default behavior of Run module is keep asking buffer for data and call write method to write them on disk.
+/// 3) default behavior of Run module is to interpret incoming void pointer as array of two floats and writes them separately in two columns.
 
-class plrsModuleRecorder : public plrsStateMachine{
+class RawRecorder : public plrsModuleRecorder{
 
 public:
 
-    plrsModuleRecorder( plrsController* c);    //!< Constructor.
+    RawRecorder( plrsController* c);    //!< Constructor.
 
-    virtual ~plrsModuleRecorder();  //!< Destructor
+    virtual ~RawRecorder();  //!< Destructor
 
 protected:
-
-    void Configure();
-
-	void Deconfigure();
-
-    void Run();
 
     virtual void WriteToFile( void* );
 
-protected:
-
-    ofstream output_file;
-
-    int wait_time_us;
-
-    int del_time;
-
 };
 
+extern "C" RawRecorder* create_RawRecorder( plrsController* c);
 
+extern "C" void destroy_RawRecorder( RawRecorder* p );
 
-extern "C" plrsModuleRecorder* create_plrsModuleRecorder( plrsController* c );
-
-
-
-extern "C" void destroy_plrsModuleRecorder( plrsModuleRecorder* p );
 
 #endif

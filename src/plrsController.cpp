@@ -52,6 +52,7 @@ plrsController::plrsController( ConfigParser* m) : cparser(m){
     }
 
     stop_flag = false;
+    start_time_ms = std::chrono::high_resolution_clock::now();
 }
 
 plrsController::~plrsController(){

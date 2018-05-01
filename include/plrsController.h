@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <pthread.h>
+#include <chrono>
 
 #include "ConfigParser.h"
 #include "plrsStateMachine.h"
@@ -32,6 +33,10 @@ public:
 
     unsigned int GetTimeStamp();
         //!< Thread safe way to call time(0)  and returns time since Linux epoch.
+
+    unsigned int GetMSTimeStamp(){
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time_ms).count();
+    }
 
     unsigned int GetWDTimer(){ return wdtimer;}
         //!< Returns current value of watchdog timer.
@@ -117,6 +122,8 @@ private:
 
     unsigned int start_time;    //!< Start time of DAQ
     unsigned int max_run_time;  //!< Maximum running time of DAQ
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_time_ms;
 
     bool stop_flag;         //!< Set to true if user types quit or q.
 

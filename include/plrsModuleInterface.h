@@ -18,8 +18,6 @@ public:
 
     virtual ~plrsModuleInterface();  //!< Destructor
 
-    string GetModuleName(){ return "interface";}
-
 protected:
 
     void Configure();
@@ -27,8 +25,6 @@ protected:
     void Run();
 
 	void Deconfigure();
-
-    void Deinitialize();
 
 protected:
 

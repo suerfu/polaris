@@ -1,12 +1,10 @@
 #include "plrsModuleGraphics.h"
 
+#include <unistd.h>
+
 
 plrsModuleGraphics::plrsModuleGraphics( plrsController* c ) : plrsStateMachine( c ){
-    rdo = 0;
-    now = 0;
-    last_update = 0;
     pause = false;
-    refresh_rate = cparser->GetInt("refresh_rate", 1);
 }
 
 
@@ -15,37 +13,34 @@ plrsModuleGraphics::~plrsModuleGraphics(){}
 
 
 
-void plrsModuleGraphics::Configure(){}
-
-
-
-void plrsModuleGraphics::Deconfigure(){}
-
-
-
-void plrsModuleGraphics::Deinitialize(){}
-
+void plrsModuleGraphics::Configure(){
+    refresh_rate = cparser->GetInt("refresh_rate", 1);
+}
 
 
 void plrsModuleGraphics::Clear(){}
 
 
 
-void plrsModuleGraphics::PreEvent(){}
+void plrsModuleGraphics::Run(){
 
+    void* rdo = 0;
 
+    uint32_t now = 0;
+    uint32_t last_update = 0;
 
-void plrsModuleGraphics::PostEvent(){}
-    // can be used to update the graphics if necessary
+    while( GetState()==RUN ){
 
-void plrsModuleGraphics::Event(){
-
-    rdo = PullFromBuffer( RUN );
+        rdo = PullFromBuffer();
  
-    if( rdo!=0){
+        if( rdo==0 ){
+            usleep(10000);
+            continue;
+        }
+
         Process( rdo );
+
         if( !pause ){
-            // if pause is not true, check refresh_rate and redraw.
             now = ctrl->GetTimeStamp();
             if( now-last_update > refresh_rate ){
                 Clear();
@@ -53,13 +48,14 @@ void plrsModuleGraphics::Event(){
                 last_update = now;
             }
         }
+
         PushToBuffer( addr_nxt, rdo);
-            // regardless of pause or not, should give the resources to next module.
         rdo = 0;
-            // set to 0 to avoid segmentation fault.
+        
+        sched_yield();
+        CommandHandler();
     }
 }
-
 
 
 void plrsModuleGraphics::CommandHandler(){

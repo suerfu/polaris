@@ -11,21 +11,21 @@
 #include "TGraph.h"
 
 
-/// VtGraphics module uses ROOT to visualize time-series data ( with second resolution).
+/// PyCMapGraphics module uses ROOT to visualize time-series data ( with second resolution).
 /// The module expects single integer data to be sent from previous module.
 /// Internally it contains two vectors of type int with twice as large capacity as requested.
 /// It will continuously push new data to back and plotting is done at different starting locations.
 /// Once incoming data fills up all spaces, vector will erase previous members once.
 
-class VtGraphics : public plrsModuleGraphics{
+class PyCMapGraphics : public plrsModuleGraphics{
 
 public:
 
-    VtGraphics( plrsController* h );
+    PyCMapGraphics( plrsController* h );
         //!< Constructor. Upon creation, it will register in Controller and obtain an ID.
         //!< The default state will be INIT.
     
-    ~VtGraphics();
+    ~PyCMapGraphics();
         //!< Destructor. It will remove it's own pointer from Controller.
 
 protected:
@@ -69,8 +69,8 @@ private:
     std::vector<Float_t> y_array;
 };
 
-extern "C" VtGraphics* create_VtGraphics( plrsController* c);
+extern "C" PyCMapGraphics* create_PyCMapGraphics( plrsController* c);
 
-extern "C" void destroy_VtGraphics( VtGraphics* p);
+extern "C" void destroy_PyCMapGraphics( PyCMapGraphics* p);
 
 #endif

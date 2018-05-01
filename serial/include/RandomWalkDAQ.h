@@ -11,26 +11,20 @@
 class RandomWalkDAQ : public plrsModuleDAQ {
 
 public:
+
     RandomWalkDAQ( plrsController* ctrl);
 
     ~RandomWalkDAQ();
 
 protected:
+
     void Configure();
 
     void Deconfigure();
 
-    void Deinitialize();
-
     void PreRun();
 
-    void StopDAQ();
-
-    void PreEvent();
-
-    void Event();
-
-    void PostEvent();
+    void Run();
 
 private:
 

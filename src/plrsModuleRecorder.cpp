@@ -2,15 +2,40 @@
 
 #include <sstream>
 
+#include <unistd.h>
 
-plrsModuleRecorder::plrsModuleRecorder( plrsController* c) : plrsStateMachine(c){}
+
+extern "C" plrsModuleRecorder* create_plrsModuleRecorder( plrsController* c ){ return new plrsModuleRecorder(c);}
+
+
+
+extern "C" void destroy_plrsModuleRecorder( plrsModuleRecorder* p ){ delete p;}
+
+
+
+plrsModuleRecorder::plrsModuleRecorder( plrsController* c) : plrsStateMachine(c){
+    wait_time_us = 1000;
+    del_time = 100;
+}
+
+
+
+plrsModuleRecorder::~plrsModuleRecorder(){;}
+
+
 
 void plrsModuleRecorder::Configure(){
+
     string filename = cparser->GetString( "/cmdl/output" );
+
     if( filename == "" )
         filename = cparser->GetString( "/cmdl/file" );
+
     if( filename == "" )
-        filename = cparser->GetString( "/module/recorder/file" );
+        filename = cparser->GetString( "/module/"+GetModuleName()+"/output" );
+
+    if( filename == "" )
+        filename = cparser->GetString( "/module/"+GetModuleName()+"/file" );
 
     if( filename != "" ){
 
@@ -26,26 +51,55 @@ void plrsModuleRecorder::Configure(){
     }
 
     else{
-        Print( "Warning - no output file specified\n", INFO);
+        Print( "Warning: no output file specified\n", INFO);
     }
 }
 
 
 
 void plrsModuleRecorder::Deconfigure(){
-    if( output_file.is_open())
-        output_file.close();
     Print( "unconfiguring...\n", DETAIL);
-}
-
-
-
-void plrsModuleRecorder::Deinitialize(){
     if( output_file.is_open())
         output_file.close();
-    Print( "cleaning up...\n", DETAIL);
 }
 
 
 
-plrsModuleRecorder::~plrsModuleRecorder(){;}
+void plrsModuleRecorder::Run(){
+
+    Print( "run started\n", DETAIL);
+
+    void* rdo=0;
+
+    while( GetState()==RUN ){
+
+        rdo = PullFromBuffer();
+
+        if( rdo==0 ){
+            if( wait_time_us<0xffffff )
+                wait_time_us += del_time;
+            usleep( wait_time_us );
+            continue;
+        }
+        else{
+            if( wait_time_us>del_time )
+                wait_time_us -= del_time;
+        }
+
+        if( output_file )
+            WriteToFile( rdo );
+
+        PushToBuffer( addr_nxt, rdo);
+        rdo = 0;
+
+        sched_yield();
+    }
+    Print( "run finished\n", DETAIL);
+}
+
+
+
+void plrsModuleRecorder::WriteToFile( void* rdo ){}
+
+
+

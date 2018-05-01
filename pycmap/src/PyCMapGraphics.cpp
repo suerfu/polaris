@@ -1,6 +1,6 @@
 #include "plrsBaseData.h"
 
-#include "VtGraphics.h"
+#include "PyCMapGraphics.h"
 
 #include "TSystem.h"
 #include "TMultiGraph.h"
@@ -10,13 +10,13 @@
 TMultiGraph* graphs = new TMultiGraph();
 
 
-extern "C" VtGraphics* create_VtGraphics( plrsController* c){ return new VtGraphics(c);}
+extern "C" PyCMapGraphics* create_PyCMapGraphics( plrsController* c){ return new PyCMapGraphics(c);}
 
 
-extern "C" void destroy_VtGraphics( VtGraphics* p){ delete p;}
+extern "C" void destroy_PyCMapGraphics( PyCMapGraphics* p){ delete p;}
 
 
-VtGraphics::VtGraphics( plrsController* c) : plrsModuleGraphics(c){
+PyCMapGraphics::PyCMapGraphics( plrsController* c) : plrsModuleGraphics(c){
     app = new TApplication( "_app", 0, 0);
     canvas = 0;
     graph = 0;
@@ -28,10 +28,10 @@ VtGraphics::VtGraphics( plrsController* c) : plrsModuleGraphics(c){
 }
 
 
-VtGraphics::~VtGraphics(){}
+PyCMapGraphics::~PyCMapGraphics(){}
 
 
-void VtGraphics::Configure(){
+void PyCMapGraphics::Configure(){
 
     if( canvas==0 )
         canvas = new TCanvas("V(t)");
@@ -42,22 +42,22 @@ void VtGraphics::Configure(){
 
 
 
-void VtGraphics::Deconfigure(){}
+void PyCMapGraphics::Deconfigure(){}
 
 
 
-void VtGraphics::Deinitialize(){}
+void PyCMapGraphics::Deinitialize(){}
 
 
 
-void VtGraphics::Clear(){
+void PyCMapGraphics::Clear(){
     if( canvas )
         canvas->Clear();
 }
 
 
 
-void VtGraphics::PreRun(){
+void PyCMapGraphics::PreRun(){
     if( canvas==0 ){
         canvas = new TCanvas("V(t)");
         canvas->SetTitle("Voltage as function of time");
@@ -71,7 +71,7 @@ void VtGraphics::PreRun(){
 
 
 
-void VtGraphics::Process( void* rdo ){
+void PyCMapGraphics::Process( void* rdo ){
 
     if( x_array.size()>2*x_size ){
         x_array.erase( x_array.begin(), x_array.begin()+x_array.size()-x_size);
@@ -84,13 +84,13 @@ void VtGraphics::Process( void* rdo ){
 
     if( temp->size()>1 ){
         x_array.push_back( (*temp)[0].GetInt() );
-        y_array.push_back( (*temp)[1].GetInt() );
+        y_array.push_back( (*temp)[3].GetInt() );
     }
 }
 
 
 
-void VtGraphics::Draw( void* rdo ){
+void PyCMapGraphics::Draw( void* rdo ){
     unsigned int size = x_array.size() < x_size ? x_array.size() : x_size;
     if( size>0 ){
         graph->DrawGraph( size, &x_array[x_array.size()-size], &y_array[y_array.size()-size], "APL");

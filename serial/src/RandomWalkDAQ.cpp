@@ -1,5 +1,7 @@
 #include "RandomWalkDAQ.h"
 
+#include "plrsBaseData.h"
+
 #include <sstream>
 #include <unistd.h>
 
@@ -22,7 +24,7 @@ RandomWalkDAQ::~RandomWalkDAQ(){}
 
 void RandomWalkDAQ::Configure(){
     
-    Print( "Opening /dev/urandom\n", DEBUG);
+    Print( "opening /dev/urandom\n", DEBUG);
     file.open("/dev/urandom");
     
     if(!file){
@@ -32,60 +34,63 @@ void RandomWalkDAQ::Configure(){
     else{
         int id = ctrl->GetIDByName( this->GetModuleName() );
 
-        stringstream ss;
-        ss << this->GetModuleName()+" has ID " << id << "\n";
-        Print( ss.str(), DEBUG);
-
         for( int i=0; i<buff_depth; ++i )
-            PushToBuffer( id, reinterpret_cast<void*>(new int[4] ) );
+            PushToBuffer( id, reinterpret_cast<void*>(new vector<plrsBaseData>));
     }
-}   
+}
+
 
 void RandomWalkDAQ::Deconfigure(){
-    Print( "Closing input file /dev/random\n", DEBUG);
-    file.close();
-    Deinitialize();
-}
-
-void RandomWalkDAQ::Event(){
-
-    void* p = PullFromBuffer( RUN );
-
-    if( p!=0 ){
-        char* c = reinterpret_cast<char*>( p );
-        int* a = reinterpret_cast<int*>( p );
-        float* f = reinterpret_cast<float*>( reinterpret_cast<int*>(p)+sizeof(int));
-
-        file.read( c, sizeof(char));
-        if( *c%2==0 )
-            current_value++;
-        else
-            current_value--;
-
-        a[0] = 1000*(ctrl->GetTimeStamp() - start_time);
-        f[0] = current_value;
-
-        PushToBuffer( addr_nxt, p );
-    }
-    usleep( sample_intv );
-}
-
-void RandomWalkDAQ::PreEvent(){}
-
-void RandomWalkDAQ::PostEvent(){}
-
-void RandomWalkDAQ::PreRun(){
-    start_time = ctrl->GetTimeStamp();
-;}
-
-void RandomWalkDAQ::StopDAQ(){;}
-
-void RandomWalkDAQ::Deinitialize(){
 
     void* p = PullFromBuffer();
 
     while( p!=0 ){
-        delete [] reinterpret_cast<int*>(p);
+        delete reinterpret_cast<vector<plrsBaseData>* >(p);
         p = PullFromBuffer();
     }
+
+    Print( "closing input file /dev/random\n", DEBUG);
+    file.close();
 }
+
+
+void RandomWalkDAQ::PreRun(){ start_time = ctrl->GetTimeStamp();}
+
+
+void RandomWalkDAQ::Run(){
+
+    void* p = PullFromBuffer();
+
+    while( GetState()==RUN ){
+    
+        p = PullFromBuffer();
+
+        if( p!=0 ){
+            char c;
+            vector<plrsBaseData>* data = reinterpret_cast< vector<plrsBaseData>* >( p );
+
+            file.read( &c, sizeof(char));
+            if( c%2==0 )
+                current_value++;
+            else
+                current_value--;
+
+            int time = (ctrl->GetTimeStamp() - start_time);
+            int value = current_value;
+
+            data->clear();
+            data->push_back( plrsBaseData( time ));
+            data->push_back( plrsBaseData( value ));
+
+            PushToBuffer( addr_nxt, p );
+
+            p = 0;
+        }
+
+        sched_yield();
+        CommandHandler();
+        usleep( sample_intv );
+    }
+}
+
+

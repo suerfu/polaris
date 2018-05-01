@@ -21,8 +21,6 @@ public:
     virtual ~plrsModuleInput();
         //!< Destructor
 
-    string GetModuleName(){ return "input";}
-
     void SendUserCommand( string );
 
 protected:

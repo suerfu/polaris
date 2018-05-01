@@ -91,6 +91,12 @@ public:
     DAQSTATE GetState();    //!< Return the state of this FSM.
 	DAQSTATE GetStatus();   //!< Return the local status of this FSM.
 
+    std::string GetModuleName(){
+        return module_name;
+    }
+        //!< Return module name. Used by ctrl to identify different modules.
+
+
 private:
 
 	int ID; //!< Obtained from controller upon registration. Used to identify different modules.
@@ -98,11 +104,6 @@ private:
 
     string module_name;
         //!< Module name. Configurable via Config Parser.
-
-    std::string GetModuleName(){
-        return module_name;
-    }
-        //!< Return module name. Used by ctrl to identify different modules.
 
     
     void SetModuleName( std::string s){
