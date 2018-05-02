@@ -47,6 +47,8 @@ public:
 
     void Move( bool fw);
 
+    int GetResponse( char );
+
     int GetAz();
 
     int GetAx();

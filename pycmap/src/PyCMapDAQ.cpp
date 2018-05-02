@@ -115,8 +115,12 @@ void PyCMapDAQ::Deconfigure(){
 void PyCMapDAQ::PreRun(){
     Print( "DAQ starting\n", DETAIL);
 
-    LaserOn( true );
+    Print( "zero-ing coordinate.\n", DETAIL);
+    ZeroAx();
+    ZeroAz();
+
     MotorOn( true );
+    LaserOn( true );
 
     start_time = ctrl->GetTimeStamp();
 }
@@ -157,7 +161,9 @@ void PyCMapDAQ::Event(){
         adc.clear();
         for( int i=0; i<navg; i++){
             adc.push_back( ReadADC() );
-            usleep(100000);
+            usleep(10000);
+            if( GetState()!=RUN)
+                break;
         }
         if( QualityControl( adc, drift_threshold ) )
             break;
@@ -188,9 +194,10 @@ void PyCMapDAQ::Event(){
 
 
 void PyCMapDAQ::PostEvent(){
-    if( scan_ax.size()==0 )
+    if( scan_ax.size()==0 ){
         PushCommand( 0, "quit");
-    sleep(1);
+        usleep(10000);
+    }
 }
 
 
@@ -278,24 +285,48 @@ void PyCMapDAQ::Move( bool fw ){
 
 
 
+int PyCMapDAQ::GetResponse( char c ){
+
+    char buff[32];
+
+    int nbytes = 1;
+    while( nbytes>0 ){
+        usleep( 10000 );
+        nbytes = port.serial_read( buff, 32);
+        if( GetStatus()!=RUN )
+            break;
+    }
+
+    nbytes = -1;
+    while( nbytes<=0 ){
+
+        port.serial_write( &c, 1);
+
+        usleep( 10000 );
+        nbytes = port.serial_read( buff, 32);
+
+        if( nbytes>0 )
+            break;
+
+        usleep( 50000 );
+        nbytes = port.serial_read( buff, 32);
+
+        if( GetStatus()!=RUN )
+            break;
+    }
+    if( nbytes>0 )
+        buff[nbytes] = '\0';
+    return atoi( buff );
+}
+
+
+
 // Get axial coordinate in integer.
 // Procedure:
 // send command p(lower case) to the hardware, wait for 20 ms.
 // If no response, repeat above.
 int PyCMapDAQ::GetAx(){
-//    ctrl->UpdateWDTimer();
-    char c = 'p';
-    char buff[10];
-    int nbytes = -1;
-    while( nbytes<=0 ){
-        port.serial_write( &c, 1);
-        usleep( 40000 );
-        nbytes = port.serial_read( buff, 10);
-        if( GetStatus()!=RUN )
-            break;
-    }
-    buff[nbytes] = '\0';
-    return atoi( buff );
+    return GetResponse('p');
 }
 
 
@@ -305,46 +336,42 @@ int PyCMapDAQ::GetAx(){
 // send command P(upper case) to the hardware, wait for 20 ms.
 // If no response, repeat above.
 int PyCMapDAQ::GetAz(){
-//    ctrl->UpdateWDTimer();
-    char c = 'P';
-    char buff[10];
-    int nbytes = -1;
-    while( nbytes<=0 ){
-        port.serial_write( &c, 1);
-        usleep( 40000 );
-        nbytes = port.serial_read( buff, 10);
-        if( GetStatus()!=RUN )
-            break;
-    }
-    buff[nbytes] = '\0';
-    return atoi( buff );
+    return GetResponse('P');
+
 }
 
 
 
 
 void PyCMapDAQ::MoveTo( int ax, int az){
-    stringstream ss;
-    ss << "Moving to coordinate (" << ax << ", " << az <<")\n";
-    Print(ss.str(), DETAIL);
-
     int pos_ax = GetAx();
     int pos_az = GetAz();
+
+    stringstream ss;
+    ss << "moving to coordinate (" << ax << ", " << az <<") from ("<<pos_ax<<", "<<pos_az<<")\n";
+    Print(ss.str(), DETAIL);
 
     while( ax!=pos_ax || az!=pos_az){
         if( ax!=pos_ax )
             Move( ax>pos_ax );
         if( az!=pos_az )
             Rotate( az>pos_az );
-        usleep(50000);
+        usleep(1000);
         pos_ax = GetAx();
         pos_az = GetAz();
-        if( GetStatus()!=RUN )
-            break;
+
+//        ss.str( std::string() );
+//        ss << "moved to coordinate (" << pos_ax << ", " << pos_az <<")\n";
+//        Print(ss.str(), DETAIL);
+
+        if( GetState()!=RUN ){
+            Print("run interrupted...\n", DETAIL);
+            return;
+        }
     }
 
     ss.str( std::string() );
-    ss << "Moved to coordinate (" << ax << ", " << az <<")\n";
+    ss << "moved to coordinate (" << ax << ", " << az <<")\n";
     Print(ss.str(), DETAIL);
 }
 
@@ -356,7 +383,7 @@ int PyCMapDAQ::ReadADC(){
     int nbytes = -1;
     while( nbytes<=0 ){
         port.serial_write( &c, 1);
-        usleep( 20000 );
+        usleep( 10000 );
         nbytes = port.serial_read( buff, 10);
         if( GetStatus()!=RUN )
             break;

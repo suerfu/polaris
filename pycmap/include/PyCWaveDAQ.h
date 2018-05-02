@@ -1,5 +1,5 @@
-#ifndef PYCSCOPE_H
-    #define PYCSCOPE_H 1
+#ifndef PYCWAVEDAQ_H
+    #define PYCWAVEDAQ_H 1
 
 #include "plrsModuleDAQ.h"
 #include "plrsController.h"
@@ -8,13 +8,13 @@
 
 #include <unistd.h>
 
-class PyCScope : public plrsModuleDAQ{
+class PyCWaveDAQ : public plrsModuleDAQ{
 
 public:
 
-    PyCScope( plrsController* c);
+    PyCWaveDAQ( plrsController* c);
 
-    ~PyCScope();
+    ~PyCWaveDAQ();
 
 
     void Configure();
@@ -77,9 +77,9 @@ private:
 };
 
 
-extern "C" PyCScope* create_PyCScope( plrsController* c ){ return new PyCScope(c);}
+extern "C" PyCWaveDAQ* create_PyCWaveDAQ( plrsController* c ){ return new PyCWaveDAQ(c);}
 
 
-extern "C" void destroy_PyCScope( PyCScope* p ){ delete p;}
+extern "C" void destroy_PyCWaveDAQ( PyCWaveDAQ* p ){ delete p;}
 
 #endif

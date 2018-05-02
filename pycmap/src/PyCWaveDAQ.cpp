@@ -1,4 +1,4 @@
-#include "PyCScope.h"
+#include "PyCWaveDAQ.h"
 
 #include "plrsBaseData.h"
 
@@ -11,17 +11,17 @@
 
 
 /// Constructor. buff_depth will control depth of FIFO buffer.
-PyCScope::PyCScope( plrsController* ctrl) : plrsModuleDAQ( ctrl){
+PyCWaveDAQ::PyCWaveDAQ( plrsController* ctrl) : plrsModuleDAQ( ctrl){
     buff_depth = 100;
 }
 
 
 /// Destructor. Nothing needs to be done.
-PyCScope::~PyCScope(){}
+PyCWaveDAQ::~PyCWaveDAQ(){}
 
 
 
-void PyCScope::Configure(){
+void PyCWaveDAQ::Configure(){
 
     Print("Configuring serial port...\n", DETAIL);
 
@@ -102,7 +102,7 @@ void PyCScope::Configure(){
 
 
 
-void PyCScope::Deconfigure(){
+void PyCWaveDAQ::Deconfigure(){
     Print( "Closing serial port...\n", DETAIL);
     port.serial_close();
 }
@@ -110,7 +110,7 @@ void PyCScope::Deconfigure(){
 
 
 // In PreRun, Zero current position, move by the offset and zero again.
-void PyCScope::PreRun(){
+void PyCWaveDAQ::PreRun(){
     Print( "DAQ starting\n", DETAIL);
 
     LaserOn( true );
@@ -121,7 +121,7 @@ void PyCScope::PreRun(){
 
 
 
-void PyCScope::Run(){
+void PyCWaveDAQ::Run(){
     while( GetState()==RUN){
         if( scan_az.size()==0 )
             break;
@@ -134,13 +134,13 @@ void PyCScope::Run(){
 }
 
 
-void PyCScope::PreEvent(){
+void PyCWaveDAQ::PreEvent(){
     MoveTo( scan_ax.back()+offset_ax, scan_az.back()+offset_az);
 }
 
 
 
-void PyCScope::Event(){
+void PyCWaveDAQ::Event(){
         
     for( int i=0; i<navg; i++){
 
@@ -159,7 +159,7 @@ void PyCScope::Event(){
 
         vector<plrsBaseData>* data = reinterpret_cast< vector<plrsBaseData>*>(rdo);
         data->clear();
-        data->push_back( plrsBaseData( int(ctrl->GetMSTimeStamp()-start_time) ) );
+        data->push_back( plrsBaseData( int(ctrl->GetMSTimeStamp()-start_time)) );
         data->push_back( plrsBaseData( scan_ax.back() ));
         data->push_back( plrsBaseData( scan_az.back() ));
         data->push_back( plrsBaseData( adc ));
@@ -172,7 +172,7 @@ void PyCScope::Event(){
 
 
 
-void PyCScope::PostEvent(){
+void PyCWaveDAQ::PostEvent(){
     if( scan_ax.size()==0 )
         PushCommand( 0, "quit");
     sleep(1);
@@ -180,7 +180,7 @@ void PyCScope::PostEvent(){
 
 
 
-void PyCScope::PostRun(){
+void PyCWaveDAQ::PostRun(){
     Print( "DAQ finished\n", DETAIL);
 
     LaserOn( false );
@@ -189,7 +189,7 @@ void PyCScope::PostRun(){
 
 
 
-void PyCScope::ZeroAx(){
+void PyCWaveDAQ::ZeroAx(){
     Print("Resetting axial coordinate\n", DETAIL);
     char c = 'z';
     while( GetAx()!=0 ){
@@ -200,7 +200,7 @@ void PyCScope::ZeroAx(){
 }
 
 
-void PyCScope::ZeroAz(){
+void PyCWaveDAQ::ZeroAz(){
     Print("Resetting azimuthal coordinate\n", DETAIL);
     char c = 'Z';
     while( GetAz()!=0 ){
@@ -213,7 +213,7 @@ void PyCScope::ZeroAz(){
 
 // Turn on/off laser.
 // Repeat 3 times with time interval to guarantee laser turns on.
-void PyCScope::LaserOn( bool on ){
+void PyCWaveDAQ::LaserOn( bool on ){
     char c = on ? 'l' : 'k';
     for( int i=0; i<3; i++){
         port.serial_write( &c, 1 );
@@ -228,7 +228,7 @@ void PyCScope::LaserOn( bool on ){
 
 // Engage/Disengage motor.
 // Repeat 3 times with time interval to guarantee laser turns on.
-void PyCScope::MotorOn( bool on ){
+void PyCWaveDAQ::MotorOn( bool on ){
     char c = on ? 'e' : 'E';
     for( int i=0; i<3; i++){
         port.serial_write( &c, 1 );
@@ -246,7 +246,7 @@ void PyCScope::MotorOn( bool on ){
 // Get azimuthal coordinate and compute destination.
 // Next send command to device and re-get coordinate
 // Repeat above until moved to the final position.
-void PyCScope::Rotate( bool cw ){
+void PyCWaveDAQ::Rotate( bool cw ){
     char c = cw ? 'c' : 'C';
     port.serial_write( &c, 1);
 }
@@ -256,7 +256,7 @@ void PyCScope::Rotate( bool cw ){
 // Get axial coordinate and compute destination.
 // Next send command to device and re-get coordinate
 // Repeat above until moved to the final position.
-void PyCScope::Move( bool fw ){
+void PyCWaveDAQ::Move( bool fw ){
     char c = fw ? 'f' : 'F';
     port.serial_write( &c, 1);
 }
@@ -267,7 +267,7 @@ void PyCScope::Move( bool fw ){
 // Procedure:
 // send command p(lower case) to the hardware, wait for 20 ms.
 // If no response, repeat above.
-int PyCScope::GetAx(){
+int PyCWaveDAQ::GetAx(){
 //    ctrl->UpdateWDTimer();
     char c = 'p';
     char buff[10];
@@ -289,7 +289,7 @@ int PyCScope::GetAx(){
 // Procedure:
 // send command P(upper case) to the hardware, wait for 20 ms.
 // If no response, repeat above.
-int PyCScope::GetAz(){
+int PyCWaveDAQ::GetAz(){
 //    ctrl->UpdateWDTimer();
     char c = 'P';
     char buff[10];
@@ -308,7 +308,7 @@ int PyCScope::GetAz(){
 
 
 
-void PyCScope::MoveTo( int ax, int az){
+void PyCWaveDAQ::MoveTo( int ax, int az){
     stringstream ss;
     ss << "Moving to coordinate (" << ax << ", " << az <<")\n";
     Print(ss.str(), DETAIL);
@@ -335,7 +335,7 @@ void PyCScope::MoveTo( int ax, int az){
 
 
 
-int PyCScope::ReadADC(){
+int PyCWaveDAQ::ReadADC(){
     char c = 'r';
     char buff[10];
     int nbytes = -1;

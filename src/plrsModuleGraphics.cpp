@@ -14,7 +14,8 @@ plrsModuleGraphics::~plrsModuleGraphics(){}
 
 
 void plrsModuleGraphics::Configure(){
-    refresh_rate = cparser->GetInt("refresh_rate", 1);
+    refresh_rate = cparser->GetInt("refresh_ms", 1000);
+    refresh_rate *= 1000;
 }
 
 
@@ -41,7 +42,7 @@ void plrsModuleGraphics::Run(){
         Process( rdo );
 
         if( !pause ){
-            now = ctrl->GetTimeStamp();
+            now = ctrl->GetMSTimeStamp();
             if( now-last_update > refresh_rate ){
                 Clear();
                 Draw( rdo );
@@ -52,7 +53,7 @@ void plrsModuleGraphics::Run(){
         PushToBuffer( addr_nxt, rdo);
         rdo = 0;
         
-        sched_yield();
+        usleep( 10000 );
         CommandHandler();
     }
 }
