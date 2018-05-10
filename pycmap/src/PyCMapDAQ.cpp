@@ -159,7 +159,7 @@ void PyCMapDAQ::PreRun(){
     MotorOn( true );
     LaserOn( true );
 
-    start_time = ctrl->GetTimeStamp();
+    start_time = ctrl->GetMSTimeStamp();
 }
 
 
@@ -215,7 +215,7 @@ void PyCMapDAQ::Event(){
 
     vector<plrsBaseData>* data = reinterpret_cast< vector<plrsBaseData>*>(rdo);
     data->clear();
-    data->push_back( plrsBaseData( int(ctrl->GetTimeStamp()-start_time)) );
+    data->push_back( plrsBaseData( int(ctrl->GetMSTimeStamp()-start_time)) );
     data->push_back( plrsBaseData( scan_ax.back() ));
     data->push_back( plrsBaseData( scan_az.back() ));
     data->push_back( plrsBaseData( avg ));

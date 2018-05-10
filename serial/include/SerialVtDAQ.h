@@ -39,11 +39,10 @@ protected:
     void Deconfigure();
         //!< Close serial port.
 
-    void Deinitialize();
-        //!< Send unsent data to next module.
-
     void PreRun();
         //!< Instruct hardware to start data taking. 
+
+    void Run();
 
     void PostRun();
         //!< Instruct hardware to stop.
@@ -58,20 +57,30 @@ protected:
 
     void PostEvent();
 
+    int ReadADC( int, int);
 private:
-
-    std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
 
     serialport port;
 
     int buff_depth;
 
+    int samp_interval;
+
     int sampling_period;
+
+    int start_time;
+
+    vector<int> adc_pchannels;
+    vector<int> adc_nchannels;
 };
 
 
-extern "C" SerialVtDAQ* create_SerialVtDAQ( plrsController* c);
+/// creator function for loading the module.
+extern "C" SerialVtDAQ* create_SerialVtDAQ( plrsController* c ){ return new SerialVtDAQ(c);}
 
-extern "C" void destroy_SerialVtDAQ( SerialVtDAQ* p );
+
+/// destructor function for releasing the module.
+extern "C" void destroy_SerialVtDAQ( SerialVtDAQ* p ){ delete p;}
+
 
 #endif

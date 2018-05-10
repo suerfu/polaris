@@ -1,16 +1,10 @@
 #include "SerialVtDAQ.h"
 
+#include "plrsBaseData.h"
+
 #include <sstream>
 #include <iostream>
 #include <cstring>
-
-
-/// creator function for loading the module.
-extern "C" SerialVtDAQ* create_SerialVtDAQ( plrsController* c ){ return new SerialVtDAQ(c);}
-
-
-/// destructor function for releasing the module.
-extern "C" void destroy_SerialVtDAQ( SerialVtDAQ* p ){ delete p;}
 
 
 /// Constructor. buff_depth will control depth of FIFO buffer.
@@ -29,10 +23,10 @@ void SerialVtDAQ::Configure(){
     Print("Configuring serial port...\n", DETAIL);
 
     // open serial port
-    string fname = cparser->GetString("/module/daq/port");
+    string fname = cparser->GetString("/module/"+GetModuleName()+"/port");
     if( fname=="" ){
         fname = "ttyS0";
-        Print( "Cannot find /module/daq/port, using ttyS0\n", ERR);
+        Print( "Cannot find /module/"+GetModuleName()+"/port, using ttyS0\n", ERR);
     }
     else
         Print( "opening "+fname+" for data acquisition\n", DETAIL);
@@ -46,6 +40,7 @@ void SerialVtDAQ::Configure(){
     // port successfully opened.
 
     port.set_cooked();
+    port.set_cflag( CLOCAL, true);
     port.set_baud( B9600 );
 
     Print("SerialVt port configured.\n", DETAIL);
@@ -53,19 +48,18 @@ void SerialVtDAQ::Configure(){
     // fill in circular FIFO buffer with resources.
     for( int i=0; i<buff_depth; ++i ){
         int id = ctrl->GetIDByName( this->GetModuleName() );
-        if( sizeof(int)>=sizeof(float) )
-            PushToBuffer( id, new int[2] );
-        else
-            PushToBuffer( id, new float[2] );
-            // one for time in milisecond and the other for average voltage value
+        PushToBuffer( id, new vector<plrsBaseData> );
     }
 
+    samp_interval = cparser->GetInt("/module/"+GetModuleName()+"/sample_interval_ms", 10);
 
-    string freq = cparser->GetString("/module/daq/sample_interval");
-    if( freq=="" )
-        freq = "20";
-    freq = "/adc/freq " + freq + "\r";
-    port.serial_write( &freq[0], freq.size());
+    adc_pchannels = cparser->GetIntArray("/module/"+GetModuleName()+"/adc_pchannels");
+    if( adc_pchannels.size()==0 )
+        adc_pchannels.push_back(0);
+    adc_nchannels = cparser->GetIntArray("/module/"+GetModuleName()+"/adc_nchannels");
+    if( adc_nchannels.size()==0 )
+        adc_nchannels.push_back(0xf);
+
 
     Print("ADC configured.\n",DETAIL);
 }
@@ -79,32 +73,27 @@ void SerialVtDAQ::Deconfigure(){
 
 
 
-void SerialVtDAQ::Deinitialize(){
+void SerialVtDAQ::PreRun(){
+    Print( "DAQ starting\n", DETAIL);
+    start_time = ctrl->GetMSTimeStamp();
+}
 
-    Print( "Cleaning up...\n", DETAIL);
 
-    void* rdo = PullFromBuffer();
-    while( rdo!=0 ){
-        delete reinterpret_cast<int*>(rdo);
-        rdo = PullFromBuffer();
+
+void SerialVtDAQ::Run(){
+    while( GetState()==RUN){
+        PreEvent();
+        Event();
+        PostEvent();
+
         sched_yield();
     }
 }
 
 
-void SerialVtDAQ::PreRun(){
-    Print( "DAQ starting\n", DETAIL);
-
-    start_time = std::chrono::high_resolution_clock::now();
-
-    char c[] = "/adc/on\r";
-    port.serial_write( c, strlen(c));
-}
-
-
 
 void SerialVtDAQ::PreEvent(){
-    sleep(1);
+    usleep( samp_interval*1000 );
 }
 
 
@@ -114,33 +103,22 @@ void SerialVtDAQ::Event(){
     void* rdo = 0;
     rdo = PullFromBuffer();
     if( rdo==0 ){
-        sleep(1);
+        usleep(100000);
         return;
     }
-        
 
-    char data_in[64];
-    data_in[0] = 64;
-
-    int nbyte = 0;
-    while( ( nbyte = port.serial_read( data_in, 64) )<=0 ){
-        if(GetState()!=RUN)
-            return;
+    vector<int> adc;
+    adc.push_back( int(ctrl->GetMSTimeStamp()-start_time));
+    for( unsigned int i=0; i<adc_pchannels.size(); i++ ){
+        adc.push_back( ReadADC( adc_pchannels[i], adc_nchannels[i]));
     }
-    
-    int t = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count();
 
-    data_in[nbyte] = '\0';
+    vector<plrsBaseData>* data = reinterpret_cast< vector<plrsBaseData>*>(rdo);
+    data->clear();
+    for( unsigned int i=0; i<adc.size(); i++)
+        data->push_back( plrsBaseData( int( adc[i]) ) );
 
-    if( data_in[0]=='#' || data_in[0]=='/'){
-        PushToBuffer( ctrl->GetIDByName(this->GetModuleName()), rdo);
-        return;
-    }
-    else{
-        reinterpret_cast<int*>(rdo)[0] = t;
-        reinterpret_cast<int*>(rdo)[1] = atoi(data_in);
-        PushToBuffer( addr_nxt, rdo);
-    }
+    PushToBuffer( addr_nxt, rdo);
 }
 
 
@@ -151,10 +129,29 @@ void SerialVtDAQ::PostEvent(){}
 
 void SerialVtDAQ::PostRun(){
     Print( "DAQ stopping\n", DETAIL);
-
-    char c[] = "/adc/off\r";
-    port.serial_write( c, strlen(c) );
 }
 
 
 
+int SerialVtDAQ::ReadADC( int pos, int neg){
+    char p = pos+'0';  // 0x30 is 0 in ascii
+    char q = neg<0 ? 'N' : neg+'a';  // 0x61 is a in ascii
+    port.serial_write( &p, 1);
+    port.serial_write( &q, 1);
+
+    char r = 'r';
+    port.serial_write( &r, 1);
+
+    char buffer[12];
+    int nbytes = -1;
+    while( nbytes<0 ){
+        nbytes = port.serial_read( buffer, 12);
+        if( GetState()!=RUN )
+            break;
+    }
+
+    if( nbytes>=0 )
+    buffer[nbytes] = '\0';
+
+    return atoi( buffer );
+}
