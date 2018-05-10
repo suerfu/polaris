@@ -801,7 +801,6 @@ string ConfigParser::ExtractParameter(const string& s) const{
 map<string, vector<string> > ConfigParser::GetListOfParameters(const string& s){
 
     map<string, vector<string> > ret;
-    //ConfigParser ret;
         // final map to be returned.
 
     map< string, map< string, vector<string> > >::iterator itr;

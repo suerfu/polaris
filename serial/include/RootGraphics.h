@@ -1,5 +1,5 @@
-#ifndef VTGRAPHICS_H
-    #define VTGRAPHICS_H 1
+#ifndef ROOTGRAPHICS_H
+    #define ROOTGRAPHICS_H 1
 
 #include "plrsModuleGraphics.h"
 
@@ -9,26 +9,67 @@
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TGraph.h"
+#include "TH1F.h"
+#include "TH2F.h"
 
 
-/// VtGraphics module uses ROOT to visualize time-series data ( with second resolution).
+/// RootGraphics module uses ROOT to visualize time-series data ( with second resolution).
 /// The module expects single integer data to be sent from previous module.
 /// Internally it contains two vectors of type int with twice as large capacity as requested.
 /// It will continuously push new data to back and plotting is done at different starting locations.
 /// Once incoming data fills up all spaces, vector will erase previous members once.
 
-class VtGraphics : public plrsModuleGraphics{
+
+/// Information regarding different graphics, including on which window to plot, position on the window, titles.
+
+struct GraphInfo{
+
+    bool operator<( const GraphInfo& b){ return page<b.page;}
+
+    int page;
+    int row;
+    int col;
+
+    string title;
+
+    string x_title;
+    int x_index;
+    string y_title;
+    int y_index;
+    int z_index;
+
+    vector<float> x_range;
+    vector<float> y_range;
+
+    TGraph* gr;
+    TH2F* gr2d;
+    TH1F* hist;
+    TH2F* hist2d;
+};
+
+
+
+struct CanvasInfo{
+    int nrow;
+    int ncol;
+    TCanvas* cv;
+};
+
+
+class RootGraphics : public plrsModuleGraphics{
 
 public:
 
-    VtGraphics( plrsController* h );
+    RootGraphics( plrsController* h );
         //!< Constructor. Upon creation, it will register in Controller and obtain an ID.
         //!< The default state will be INIT.
     
-    ~VtGraphics();
+    ~RootGraphics();
         //!< Destructor. It will remove it's own pointer from Controller.
 
 protected:
+
+    void Initialize();
 
     void Configure();
         //!< This method will be called by controller to configure the DAQ.
@@ -52,32 +93,29 @@ protected:
     virtual void Clear();
         //!< Clear the graphics
 
+    void Divide();
+        //!< Divide Canvas into rows and columns.
+
 private:
 
     TApplication* app;
 
-    TCanvas* canvas;
-        // ROOT canvas class
+    vector<CanvasInfo> canvas;
+        // ROOT canvas arrays since there could be multiple plots
 
-    TCanvas* canvas2;
+    vector<GraphInfo> grinfo;
 
-    TGraph* graph1;
-        // ROOT graph object
 
-    TGraph* graph2;
-        // ROOT graph object
+    unsigned int max_size;
 
-    unsigned int x_size;
-
-    std::vector<Float_t> x_array;
-    
-    std::vector<Float_t> y_array;
-
-    std::vector<Float_t> z_array;
+    std::map< int, std::vector<Float_t> > data;
+        // 2-D array to store data.
 };
 
-extern "C" VtGraphics* create_VtGraphics( plrsController* c);
+extern "C" RootGraphics* create_RootGraphics( plrsController* c){ return new RootGraphics(c);}
 
-extern "C" void destroy_VtGraphics( VtGraphics* p);
+
+extern "C" void destroy_RootGraphics( RootGraphics* p){ delete p;}
+
 
 #endif

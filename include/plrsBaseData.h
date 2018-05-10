@@ -3,6 +3,7 @@
 
 #include <ostream>
 #include <string>
+#include <sstream>
 
 enum PLRS_DT{ DT_INT, DT_FLT, DT_STR};
 
@@ -43,17 +44,46 @@ public:
 
 
 // ---------------------------------- Member access operators -----------------------------
-    int GetInt(){ return data.i;}
+    int GetInt(){
+        if( type == DT_INT )
+            return data.i;
+        else if( type == DT_FLT )
+            return int(data.f);
+        else if( type == DT_STR ){
+            return std::stoi( str );
+        }
+        else return 0;
+    }
 
     void SetInt( int a ){ data.i = a; type = DT_INT;}
 
 
-    float GetFloat(){ return data.f;}
+    float GetFloat(){
+        if( type == DT_FLT )
+            return int(data.f);
+        else if( type == DT_INT )
+            return data.i;
+        else if( type == DT_STR ){
+            return std::stof( str );
+        }
+        else return 0;
+    }
 
     void SetFloat( float a ){ data.f = a; type = DT_FLT;}
 
 
-    std::string GetStr(){ return str;}
+    std::string GetStr(){
+        if( type == DT_STR )
+            return str;
+        else{
+            std::stringstream s;
+            if( type == DT_FLT )
+                s << data.f;
+            else if( type == DT_INT )
+                s << data.i;
+            return s.str();
+        }
+    }
 
     void SetStr( std::string a ){ str = a; type = DT_STR;}
 

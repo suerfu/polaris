@@ -14,7 +14,7 @@ extern "C" void destroy_RandomWalkDAQ( RandomWalkDAQ* p ){ delete p;}
 
 RandomWalkDAQ::RandomWalkDAQ( plrsController* c) : plrsModuleDAQ(c){
     buff_depth = 100;
-    sample_intv = 1000000;
+    sample_intv = 10000;
     current_value = 0;
 }
 
@@ -54,7 +54,7 @@ void RandomWalkDAQ::Deconfigure(){
 }
 
 
-void RandomWalkDAQ::PreRun(){ start_time = ctrl->GetTimeStamp();}
+void RandomWalkDAQ::PreRun(){ start_time = ctrl->GetMSTimeStamp();}
 
 
 void RandomWalkDAQ::Run(){
@@ -75,7 +75,7 @@ void RandomWalkDAQ::Run(){
             else
                 current_value--;
 
-            int time = (ctrl->GetTimeStamp() - start_time);
+            int time = (ctrl->GetMSTimeStamp() - start_time);
             int value = current_value;
 
             data->clear();
