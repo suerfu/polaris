@@ -1,5 +1,7 @@
 #include "SerialVtProc.h"
 
+#include "plrsBaseData.h"
+
 #include <unistd.h>
 
 
@@ -23,7 +25,7 @@ void SerialVtProc::Configure(){
 
     adc_res = cparser->GetInt("/module/"+GetModuleName()+"/adc_res", 12);
     adc_vpref = cparser->GetFloat( "/module/"+GetModuleName()+"/adc_vpref", 3.3);
-    adc_navg = cparser->GetFloat( "/module/"+GetModuleName()+"/adc_navg", 10);
+    adc_navg = cparser->GetFloat( "/module/"+GetModuleName()+"/adc_navg", 30);
     
     string  nxt = cparser->GetString( "/module/"+GetModuleName()+"/prev_module");
     if( nxt=="" ){
@@ -43,27 +45,43 @@ void SerialVtProc::Run(){
 
     float nsamp = 0;
     float avg_time = 0;
-    float avg_adc = 0;
+    float avg_temp = 0;
+    float avg_pres = 0;
+
+    float v_temp = 0;
+    float v_pres = 0;
 
     while( GetState()==RUN ){
 
         rdo = PullFromBuffer();
         if( rdo==0 ){
-            sleep(1);
+            usleep(10000);
             continue;
         }
 
-        avg_time += reinterpret_cast<int*>(rdo)[0];
-        avg_adc += reinterpret_cast<int*>(rdo)[1];
+        vector<plrsBaseData>& data = *(reinterpret_cast< vector<plrsBaseData>*>(rdo));
+
+        avg_time += data[0].GetInt();
+        avg_temp += data[1].GetInt();
+        avg_pres += data[2].GetInt();
         nsamp++;
 
-        if( nsamp == adc_navg){
-            reinterpret_cast<float*>(rdo)[0] = (1.0*avg_time)/nsamp/1000;
-            reinterpret_cast<float*>(rdo)[1] = (adc_vpref*avg_adc)/nsamp/(1<<adc_res);
+        if( nsamp >= adc_navg){
+            avg_time /= nsamp*1000;
+            avg_temp /= nsamp;
+            avg_pres /= nsamp;
+
+            v_temp = 3*adc_vpref*avg_temp/4095;
+            v_pres = adc_vpref*avg_pres/4095;
+
+            //cout << avg_temp << "\t" << avg_pres << endl;
+            data[0].SetFloat( avg_time );
+            data[1].SetFloat( ( v_temp -1.25)/0.005 );
+            data[2].SetFloat( 50/4*(v_pres-1)*51.71 );
 
             PushToBuffer( addr_nxt, rdo);
 
-            avg_time = avg_adc = nsamp = 0;
+            avg_time = avg_temp = avg_pres = nsamp = 0;
         }
         else
             PushToBuffer( addr_prev, rdo);

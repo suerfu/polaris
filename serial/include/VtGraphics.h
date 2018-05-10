@@ -59,7 +59,12 @@ private:
     TCanvas* canvas;
         // ROOT canvas class
 
-    TGraph* graph;
+    TCanvas* canvas2;
+
+    TGraph* graph1;
+        // ROOT graph object
+
+    TGraph* graph2;
         // ROOT graph object
 
     unsigned int x_size;
@@ -67,6 +72,8 @@ private:
     std::vector<Float_t> x_array;
     
     std::vector<Float_t> y_array;
+
+    std::vector<Float_t> z_array;
 };
 
 extern "C" VtGraphics* create_VtGraphics( plrsController* c);
