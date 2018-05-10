@@ -63,6 +63,9 @@ void serialport::set_cooked(){
     setting.c_lflag &= ~ ( ECHO );
     setting.c_lflag |= ICANON;
 
+    set_spchar( VTIME, 2);
+    set_spchar( VMIN, 1);
+
     apply();
 }
 

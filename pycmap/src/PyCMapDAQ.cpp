@@ -5,9 +5,9 @@
 #include <sstream>
 #include <iostream>
 #include <cstring>
+#include <cmath>
+#include <numeric>
 #include <algorithm>
-
-
 
 
 /// Constructor. buff_depth will control depth of FIFO buffer.
@@ -40,6 +40,7 @@ void PyCMapDAQ::Configure(){
     }
 
     port.set_cooked();
+    port.set_cflag( CLOCAL, true);
     port.set_baud( B9600 );
 
     Print("Serial port configured.\n", DETAIL);
@@ -59,6 +60,34 @@ void PyCMapDAQ::Configure(){
 
     vector<int> range_ax = cparser->GetIntArray("/module/"+GetModuleName()+"/range_ax");
     vector<int> range_az = cparser->GetIntArray("/module/"+GetModuleName()+"/range_az");
+
+    float stp_ax = cparser->GetFloat("/module/"+GetModuleName()+"/step_ax", 10);
+    float stp_az = cparser->GetFloat("/module/"+GetModuleName()+"/step_az", 5);
+
+    if( cparser->GetString("/module/"+GetModuleName()+"/unit")=="mm" ){
+        range_ax[0] *= 40;
+        range_ax[1] *= 40;
+        stp_ax = stp_ax*40;
+        range_az[0] /= 360;
+        range_az[0] *= 650;
+        range_az[1] /= 360;
+        range_az[1] *= 650;
+        stp_az *= 650/360;
+    }
+    else if( cparser->GetString("/module/"+GetModuleName()+"/unit")=="cm" ){
+        range_ax[0] *= 400;
+        range_ax[1] *= 400;
+        stp_ax = stp_ax*400;
+        range_az[0] /= 360;
+        range_az[0] *= 650;
+        range_az[1] /= 360;
+        range_az[1] *= 650;
+        stp_az *= 650/360;
+    }
+
+    int step_ax = int(stp_ax);
+    int step_az = int(stp_az);
+
     if( range_ax.size()!=2 || range_az.size()!=2 ){
         Print("Error: range in wrong format. Specify range with lower and upper bounds\n", ERR );
         SetStatus( ERROR );
@@ -69,26 +98,32 @@ void PyCMapDAQ::Configure(){
         range_ax[0] = range_ax[1];
         range_ax[1] = temp;
     }
+    range_ax[1] = ((range_ax[1]-range_ax[0])/step_ax)*step_ax;
+
     if( range_az[0]>range_az[1] ){
         int temp = range_az[0];
         range_az[0] = range_az[1];
         range_az[1] = temp;
     }
+    range_az[1] = ((range_az[1]-range_az[0])/step_az)*step_az;
 
     scan_ax.clear();
     scan_az.clear();
+
     for( int az=range_az[0]; az<=range_az[1];){
-        for( int ax=range_ax[0]; ax<=range_ax[1]; ax++ ){
+        for( int ax=range_ax[0]; ax<=range_ax[1]; ax+=step_ax ){
             scan_ax.push_back( ax );
             scan_az.push_back( az );
         }
-        az++;
-        for( int ax=range_ax[1]; ax>=range_ax[0]; ax-- ){
+        az += step_az;
+        for( int ax=range_ax[1]; ax>=range_ax[0]; ax-=step_ax ){
             scan_ax.push_back( ax );
             scan_az.push_back( az );
         }
-        az++;
+        az += step_az;
     }
+    std::reverse( scan_ax.begin(), scan_ax.end());
+    std::reverse( scan_az.begin(), scan_az.end());
 
     navg = cparser->GetInt("/module/"+GetModuleName()+"/navg", 100);
 
@@ -115,9 +150,11 @@ void PyCMapDAQ::Deconfigure(){
 void PyCMapDAQ::PreRun(){
     Print( "DAQ starting\n", DETAIL);
 
-    Print( "zero-ing coordinate.\n", DETAIL);
-    ZeroAx();
-    ZeroAz();
+    if( cparser->GetString("/cmdl/zero") + cparser->GetString("/module/"+GetModuleName()+"/zero") !="" ){
+        Print( "zero-ing coordinate.\n", DETAIL);
+        ZeroAx();
+        ZeroAz();
+    }
 
     MotorOn( true );
     LaserOn( true );
@@ -161,7 +198,7 @@ void PyCMapDAQ::Event(){
         adc.clear();
         for( int i=0; i<navg; i++){
             adc.push_back( ReadADC() );
-            usleep(10000);
+            //usleep(10000);
             if( GetState()!=RUN)
                 break;
         }
@@ -216,7 +253,7 @@ void PyCMapDAQ::ZeroAx(){
     char c = 'z';
     while( GetAx()!=0 ){
         port.serial_write( &c, 1);
-        if( GetStatus()!=RUN )
+        if( GetState()!=RUN )
             break;
     }
 }
@@ -227,7 +264,7 @@ void PyCMapDAQ::ZeroAz(){
     char c = 'Z';
     while( GetAz()!=0 ){
         port.serial_write( &c, 1);
-        if( GetStatus()!=RUN )
+        if( GetState()!=RUN )
             break;
     }
 }
@@ -293,7 +330,7 @@ int PyCMapDAQ::GetResponse( char c ){
     while( nbytes>0 ){
         usleep( 10000 );
         nbytes = port.serial_read( buff, 32);
-        if( GetStatus()!=RUN )
+        if( GetState()!=RUN )
             break;
     }
 
@@ -311,7 +348,7 @@ int PyCMapDAQ::GetResponse( char c ){
         usleep( 50000 );
         nbytes = port.serial_read( buff, 32);
 
-        if( GetStatus()!=RUN )
+        if( GetState()!=RUN )
             break;
     }
     if( nbytes>0 )
@@ -385,7 +422,7 @@ int PyCMapDAQ::ReadADC(){
         port.serial_write( &c, 1);
         usleep( 10000 );
         nbytes = port.serial_read( buff, 10);
-        if( GetStatus()!=RUN )
+        if( GetState()!=RUN )
             break;
     }
     buff[nbytes] = '\0';
@@ -395,7 +432,7 @@ int PyCMapDAQ::ReadADC(){
 
 
 float PyCMapDAQ::GetAvg( vector<int> input ){
-    return std::accumulate( input.begin(), input.end(), 0.0)/input.size();
+    return accumulate( input.begin(), input.end(), 0.0)/input.size();
 }
 
 
@@ -407,11 +444,12 @@ float PyCMapDAQ::GetVar( vector<int> input){
     for( unsigned int i=0; i<input.size(); i++){
         input[i] = (input[i] - avg) * (input[i] - avg);
     }
-    return std::accumulate( input.begin(), input.end(), 0.0)/(input.size()-1);
+    return accumulate( input.begin(), input.end(), 0.0)/(input.size()-1);
 }
 
 
 bool PyCMapDAQ::QualityControl( vector<int> input, float thresh ){
+    return true;
     float sum_x(0), sum_x2(0), sum_y(0), sum_y2(0), sum_xy(0);
     float k(0), b(0);
 

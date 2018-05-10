@@ -4,6 +4,7 @@
 
 #include "TSystem.h"
 #include "TStyle.h"
+#include "TColor.h"
 #include "TAxis.h"
 
 
@@ -56,8 +57,13 @@ void PyCMapGraphics::Configure(){
 
     vector<int> ax = cparser->GetIntArray("/module/daq/range_ax");
     vector<int> az = cparser->GetIntArray("/module/daq/range_az");
-    int nbins_ax = ax[1]-ax[0]+10 < 250 ? ax[1]-ax[0]+10 : 250;
-    int nbins_az = az[1]-az[0]+10 < 250 ? az[1]-az[0]+10 : 250;
+
+    int step_ax = cparser->GetInt("/module/daq/step_ax", 1);
+    int step_az = cparser->GetInt("/module/daq/step_az", 1);
+
+    int nbins_ax = (ax[1]-ax[0]+10)/step_ax;
+    int nbins_az = (az[1]-az[0]+10)/step_az;
+
     graph2d = new TH2F("h", "h", nbins_ax, ax[0]-5, ax[1]+5, nbins_az, az[0]-5, az[1]+5);
 
     gStyle->SetOptStat(0);
@@ -141,6 +147,7 @@ void PyCMapGraphics::Process( void* rdo ){
         x_t = x_is_int ? (*temp)[colx].GetInt() : (*temp)[colx].GetFloat();
         y_t = y_is_int ? (*temp)[coly].GetInt() : (*temp)[coly].GetFloat();
         z_t = z_is_int ? (*temp)[colz].GetInt() : (*temp)[colz].GetFloat();
+//        z_t = sqrt( x_t*x_t+y_t*y_t);
         graph2d->SetBinContent( graph2d->FindBin( x_t, y_t), z_t);
     }
     gSystem->ProcessEvents();

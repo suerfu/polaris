@@ -203,6 +203,7 @@ void plrsStateMachine::EventLoop(){
             case RUN :
                 running = true;
                 Run();
+                Print(GetModuleName()+" Run finished\n", ERR);
                 running = false;
 
                 if( GetStatus()==ERROR )
@@ -221,6 +222,8 @@ void plrsStateMachine::EventLoop(){
                         break;
                     case ERROR :
                         SetStatus( ERROR );
+                        break;
+                    case RUN :
                         break;
                     default :
                         invalid_transition = true;
