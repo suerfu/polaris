@@ -440,17 +440,21 @@ string ConfigParser::GetQuotedString( istream& file ){
         return "";
 
     while( 1 ){         // first test for a number of termination conditions
-        if( *val.begin()!='"'){      // the word is a single string
+        if( *val.begin()!='"'){      // if the word does not start with ", simply return it.
             return val;
         }
+
         if( *val.rbegin()=='}' )    // end of directory
-            return val;
+            break;
+
         if( val.find( "\",", val.length()-2)!=string::npos && val.find( "\\\",", val.length()-3)==string::npos )
             // string ends with ", but not with \",
-            return val;
+            break;
+
         if( val.find( '"', val.length()-1) != string::npos && val.find("\\\"", val.length()-2)==string::npos)
             // as long as current value does not terminate with ", keep loading words
-            return val;
+            break;
+
         string temp;
         file >> temp;
         val += " "+temp;
@@ -554,8 +558,11 @@ string ConfigParser::GetString( const string& name ){
     vector< string > ret = GetStrArray( name);
     if(ret.size()==0)
         return "";
-    else
-        return ret[0];
+    else{
+        size_t first = ret[0].find_first_not_of('"');
+        size_t last = ret[0].find_last_not_of('"');
+        return ret[0].substr( first, last-first+1 );
+    }
 }
 
 

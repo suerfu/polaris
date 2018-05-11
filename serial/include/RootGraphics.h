@@ -9,6 +9,7 @@
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TGraph.h"
+#include "TGraph2D.h"
 #include "TH1F.h"
 #include "TH2F.h"
 
@@ -42,9 +43,11 @@ struct GraphInfo{
     vector<float> y_range;
 
     TGraph* gr;
-    TH2F* gr2d;
+    TGraph2D* gr2d;
     TH1F* hist;
     TH2F* hist2d;
+
+    string option;
 };
 
 

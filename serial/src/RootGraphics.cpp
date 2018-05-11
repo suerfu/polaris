@@ -62,6 +62,8 @@ void RootGraphics::Initialize(){
                 gi.x_range = cparser->GetFloatArray( itr->first+"x-range");
                 gi.y_range = cparser->GetFloatArray( itr->first+"y-range");
 
+                gi.option = cparser->GetString( itr->first+"option");
+
                 gi.gr = 0;
                 gi.gr2d = 0;
                 gi.hist = 0;
@@ -70,9 +72,13 @@ void RootGraphics::Initialize(){
                 if( gi.x_index>=0 && gi.y_index>=0 && gi.z_index>=0 ){    // all xyz column specified, either 2D histogram with specified content or time-series plot
                     if( gi.x_range.size()==3 && gi.y_range.size()==3 ){
                         gi.hist2d = new TH2F(gi.title.c_str(), gi.title.c_str(), gi.x_range[0], gi.x_range[1], gi.x_range[2], gi.y_range[0], gi.y_range[1], gi.y_range[2]);
+                        if( gi.option=="" )
+                            gi.option = "colz";
                     }
                     else{
-                        gi.gr2d = new TH2F(gi.title.c_str(), gi.title.c_str(), 250,-1, 1, 250, -1, 1);
+                        gi.gr2d = new TGraph2D();
+                        if( gi.option=="" )
+                            gi.option = "pcol";
                     }
                     grinfo.push_back( gi );
                 }
@@ -82,6 +88,8 @@ void RootGraphics::Initialize(){
                     }
                     else{
                         gi.gr = new TGraph();
+                        if( gi.option=="" )
+                            gi.option = "APL";
                     }
                     grinfo.push_back( gi );
                 }
@@ -216,40 +224,27 @@ void RootGraphics::Draw( void* rdo ){
             for( unsigned int i=0; i<size; i++){
                 gritr->gr->SetPoint( i, data[gritr->x_index][offset+i], data[gritr->y_index][offset+i]);
             }
-        }
-        else if( gritr->gr2d!=0 && size>0 ){
-            gritr->gr2d->Clear();
-//            gritr->gr2d->Draw();
-            gritr->gr2d->GetXaxis()->SetRangeUser( *min_element( data[gritr->x_index].begin()+offset, data[gritr->x_index].end()), *max_element( data[gritr->x_index].begin()+offset, data[gritr->x_index].end()) );
-            gritr->gr2d->GetYaxis()->SetRangeUser( *min_element( data[gritr->y_index].begin()+offset, data[gritr->y_index].end()), *max_element( data[gritr->y_index].begin()+offset, data[gritr->y_index].end()) );
-//            gritr->gr2d->SetAxisRange( *min_element( data[gritr->x_index].begin()+offset, data[gritr->x_index].end()), *max_element( data[gritr->x_index].begin()+offset, data[gritr->x_index].end()), "X" );
-//            gritr->gr2d->SetAxisRange( *min_element( data[gritr->y_index].begin()+offset, data[gritr->y_index].end()), *max_element( data[gritr->y_index].begin()+offset, data[gritr->y_index].end()), "Y" );
-//            cout << *min_element( data[gritr->y_index].begin()+offset, data[gritr->y_index].end()) << '\t' << *max_element( data[gritr->y_index].begin()+offset, data[gritr->y_index].end()) <<endl;;
-            for( unsigned int i=0; i<size; i++){
-                gritr->gr2d->SetBinContent( gritr->gr2d->FindBin( data[gritr->x_index][offset+i], data[gritr->y_index][offset+i]), data[gritr->z_index][offset+i]);
-            }
-            gPad->RedrawAxis();
-            gPad->Update();
-        }
-
-        if( gritr->gr!=0 ){
-            gritr->gr->Draw("APL");
+            gritr->gr->Draw( gritr->option.c_str() );
             gritr->gr->SetTitle( gritr->title.c_str() );
         }
-        else if( gritr->gr2d!=0 ){
-            gritr->gr2d->Draw("colz");
+        else if( gritr->gr2d!=0 && size>5 ){
+            gritr->gr2d->Clear();
+            for( unsigned int i=0; i<size; i++){
+                gritr->gr2d->SetPoint( i, data[gritr->x_index][offset+i], data[gritr->y_index][offset+i], data[gritr->z_index][offset+i]);
+            }
+            gritr->gr2d->Draw( gritr->option.c_str() );
             gritr->gr2d->SetTitle( gritr->title.c_str() );
         }
         else if( gritr->hist!=0 ){
-            gritr->hist->Draw();
+            gritr->hist->Draw( gritr->option.c_str() );
             gritr->hist->SetTitle( gritr->title.c_str() );
         }
         else if( gritr->hist2d!=0 ){
-            canvas[gritr->page].cv->DrawFrame();
-            gritr->hist2d->Draw();
+            gritr->hist2d->Draw( gritr->option.c_str() );
             gritr->hist2d->SetTitle( gritr->title.c_str() );
         }
-        //canvas[gritr->page].cv->Modified();
+
+        canvas[gritr->page].cv->Modified();
     }
 
     for( vector<CanvasInfo>::iterator cvitr = canvas.begin(); cvitr!=canvas.end(); ++cvitr){

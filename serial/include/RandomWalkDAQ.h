@@ -36,12 +36,16 @@ private:
 
     int buff_depth;
 
-    int current_value;
+    int ncol;
+
+    vector<int> current_value;
 };
 
 
-extern "C" RandomWalkDAQ* create_RandomWalkDAQ( plrsController* c);
+extern "C" RandomWalkDAQ* create_RandomWalkDAQ( plrsController* c ){ return new RandomWalkDAQ(c);}
 
-extern "C" void destroy_RandomWalkDAQ( RandomWalkDAQ* p );
+
+extern "C" void destroy_RandomWalkDAQ( RandomWalkDAQ* p ){ delete p;}
+
 
 #endif

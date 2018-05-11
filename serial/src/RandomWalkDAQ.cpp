@@ -6,16 +6,10 @@
 #include <unistd.h>
 
 
-extern "C" RandomWalkDAQ* create_RandomWalkDAQ( plrsController* c ){ return new RandomWalkDAQ(c);}
-
-
-extern "C" void destroy_RandomWalkDAQ( RandomWalkDAQ* p ){ delete p;}
-
-
 RandomWalkDAQ::RandomWalkDAQ( plrsController* c) : plrsModuleDAQ(c){
     buff_depth = 100;
-    sample_intv = 10000;
-    current_value = 0;
+    sample_intv = 100000;
+    ncol = 2;
 }
 
 
@@ -37,6 +31,10 @@ void RandomWalkDAQ::Configure(){
         for( int i=0; i<buff_depth; ++i )
             PushToBuffer( id, reinterpret_cast<void*>(new vector<plrsBaseData>));
     }
+
+    ncol = cparser->GetInt("/module/"+GetModuleName()+"/N", 10);
+    for( int i=0; i<ncol; i++)
+        current_value.push_back( 0 );
 }
 
 
@@ -66,21 +64,23 @@ void RandomWalkDAQ::Run(){
         p = PullFromBuffer();
 
         if( p!=0 ){
-            char c;
+            int c;
             vector<plrsBaseData>* data = reinterpret_cast< vector<plrsBaseData>* >( p );
 
-            file.read( &c, sizeof(char));
-            if( c%2==0 )
-                current_value++;
-            else
-                current_value--;
-
+            file.read( (char*)(&c), sizeof(int));
             int time = (ctrl->GetMSTimeStamp() - start_time);
-            int value = current_value;
-
             data->clear();
             data->push_back( plrsBaseData( time ));
-            data->push_back( plrsBaseData( value ));
+
+            for( int i=0; i<ncol; i++){
+                if( ((c>>i)&0x1)==0 )
+                    current_value[i]++;
+                else 
+                    current_value[i]--;
+
+                int value = current_value[i];
+                data->push_back( plrsBaseData( value ));
+            }
 
             PushToBuffer( addr_nxt, p );
 
