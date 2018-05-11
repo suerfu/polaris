@@ -98,42 +98,5 @@ void plrsModuleInput::IOHandler(){
 
 
 
-void plrsModuleInput::SendUserCommand( string in){
-
-    if( in=="quit" || in=="q" || in=="print" ){
-        PushCommand( 0, in);
-        return;
-    }
-
-    string dir, par;
-
-    size_t found = in.find( "/" );
-
-    if( found != string::npos ){
-
-        size_t found2 = in.find( "/", found+1);
-
-        if( found2 != string::npos ){
-            dir = in.substr( found+1, found2-found-1);
-            par = in.substr( found2+1, string::npos);
-        }
-    }
-
-    if( dir == "" ){
-        for( unsigned int i=0; i<module_table.size(); ++i){
-            PushCommand( i, in);
-        }
-    }
-    else{
-        int id = ctrl->GetIDByName( dir );
-        if( id != -1 ){
-            PushCommand( id, par);
-            stringstream st;
-            st << "Sending command " << par << " to module " + dir + " ID " << id << "\n";
-            Print( st.str(), ERR);
-        }
-    }
-
-}
 
 

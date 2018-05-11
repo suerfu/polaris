@@ -779,16 +779,12 @@ void plrsController::CommandHandler(){
     string cmd = PullCommand(0);
 
     if( cmd=="quit" || cmd=="q" ){
-        pthread_mutex_lock( &mux_flag );
-            stop_flag = true;
-            Print( "Stop signal received from user\n", INFO);
-        pthread_mutex_unlock( &mux_flag );
+        stop_flag = true;
+        Print( "Stop signal received\n", INFO);
     }
 
     else if( cmd=="max-evt"){
-        pthread_mutex_lock( &mux_flag );
-            stop_flag = true;
-        pthread_mutex_unlock( &mux_flag );    
+        stop_flag = true;
     }
 
     else if( cmd=="print" ){

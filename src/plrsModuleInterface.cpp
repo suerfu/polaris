@@ -1,28 +1,20 @@
-#include <sys/socket.h>
-#include <signal.h>
-#include <sys/un.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <cstring>
-
 #include "plrsModuleInterface.h"
+#include "plrsBaseData.h"
 
 #include <sstream>
+#include <cstring>
+
+#include <signal.h>
 
 
-/// creator function for loading the module.
 extern "C" plrsModuleInterface* create_plrsModuleInterface( plrsController* c ){ return new plrsModuleInterface(c);}
 
 
-
-/// destructor function for releasing the module.
 extern "C" void destroy_plrsModuleInterface( plrsModuleInterface* p ){ delete p;}
 
 
 
-plrsModuleInterface::plrsModuleInterface( plrsController* c) : plrsStateMachine(c){
-    descriptor = -1;
-}
+plrsModuleInterface::plrsModuleInterface( plrsController* c) : plrsStateMachine(c){}
 
 
 
@@ -33,69 +25,106 @@ plrsModuleInterface::~plrsModuleInterface(){;}
 void plrsModuleInterface::Configure(){
 
     string path = "/module/"+GetModuleName()+"/";
-    struct sockaddr_un soc_addr;
 
     if( cparser->GetString( path+"type" )=="unix" ){
 
-        descriptor = socket( AF_UNIX, SOCK_STREAM, 0);
+        string filename = cparser->GetString( path+"path");
+        socket.Initialize( filename );
 
-        memset( &soc_addr, 0, sizeof(soc_addr));
-        soc_addr.sun_family = AF_UNIX;
-
-        path = "/module/"+GetModuleName()+"/path";
-        strncpy( soc_addr.sun_path, path.c_str(), sizeof( soc_addr.sun_path)-1);
-        unlink( soc_addr.sun_path);
     }
 
-    if( descriptor>=0){
-
-        if ( bind( descriptor, ( struct sockaddr*) &soc_addr, sizeof(soc_addr)) < 0 ){
+    if( socket ){
+        if( socket.Bind( ) < 0 ){
             Print("socket bind error\n", ERR);
             SetStatus( ERROR );
         }
-
-        if( listen( descriptor, 5) < 0 ){
+        if( socket.Listen( 5) < 0 ){
             Print("socket listen error\n", ERR);
             SetStatus( ERROR );
         }
-
-        int flags = fcntl( descriptor, F_GETFL);
-        fcntl( descriptor, F_SETFL, flags | O_NONBLOCK);
+        socket.SetNonBlock();
     }
+    signal( SIGPIPE, SIG_IGN);
 }
 
 
 void plrsModuleInterface::Run(){
 
     void* rdo = 0;
-
-    int s2;
+    int s2 = -1;
 
     while( GetState()==RUN && GetStatus()!=ERROR ){
         
-        while( rdo==0 ){
+        rdo = PullFromBuffer();
+
+        if( rdo==0 ){
             usleep(10000);
-            rdo = PullFromBuffer();
-        }
-
-
-        if( ( s2 = accept( descriptor, 0, 0))<0 ){
-            sleep(1);
             continue;
         }
-        
-//        write( s2, buff, 13);
-        s2 = -1;
 
+        if( (s2 = socket.Accept())>=0 ){
+            socket.SetNonBlock( s2 );
+            list_client.push_back( s2 );
+            s2 = -1;
+        }
+        
+        vector<plrsBaseData>* temp = reinterpret_cast< vector<plrsBaseData>*>(rdo);
+        stringstream ss;
+        for( unsigned int i=0; i<temp->size(); i++){
+            ss << (*temp)[i] << ' ';
+        }
+
+        for( list<int>::iterator itr=list_client.begin(); itr!=list_client.end(); ++itr ){
+
+            int nr = read( *itr, 0, 0);
+            if( nr<0 ){
+                Print( "closing socket due to: "+string( strerror(errno))+"\n", ERR);
+                close( *itr);
+                *itr = -1;
+                continue;
+            }
+
+            int nbytes = write( *itr, ss.str().c_str(), strlen(ss.str().c_str()) );
+            if( nbytes<0 ){
+                Print( "write error: "+string( strerror(errno))+"\n", ERR);
+                close( *itr);
+                *itr = -1;
+                continue;
+            }
+
+            char command[256];
+            nbytes = read( *itr, command, 256 );
+            if( nbytes<0 ){
+                if( errno==EAGAIN )
+                    continue;
+                else{
+                    Print( "read error: "+string( strerror(errno))+"\n", ERR);
+                    close( *itr);
+                    *itr = -1;
+                    continue;
+                }
+            }
+            command[nbytes]='\0';
+            Print( string(command), ERR);
+            SendUserCommand( string(command) );
+        }
+        list_client.remove( -1 );
+
+        PushToBuffer( addr_nxt, rdo );
+        rdo = 0;
     }
-    close( s2 );
+}
+
+
+void plrsModuleInterface::PostRun(){
+    for( list<int>::iterator itr=list_client.begin(); itr!=list_client.end(); ++itr ){
+        close( *itr );
+    }
 }
 
 
 void plrsModuleInterface::Deconfigure(){ 
     Print( "unconfiguring...\n", DETAIL);
-    if( descriptor>=0 )
-        close( descriptor);
+    socket.Close();
 }
-
 

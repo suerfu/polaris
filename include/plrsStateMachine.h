@@ -143,6 +143,8 @@ protected:
 
     string PullCommand();   //!< Check/retrieve command from controller.
 
+    void SendUserCommand( string ); //!< command is specified as string in the format /module-name/command. This function will send the command to specified module. If module is not specified, command is sent to ctrl.
+
     virtual void CommandHandler(){;}  //!< Called to process command stack.
 
     // ===================================================================================

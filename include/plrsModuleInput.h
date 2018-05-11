@@ -21,8 +21,6 @@ public:
     virtual ~plrsModuleInput();
         //!< Destructor
 
-    void SendUserCommand( string );
-
 protected:
 
     void Initialize();

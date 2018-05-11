@@ -89,6 +89,38 @@ void plrsStateMachine::PushCommand( unsigned int i, string c){ return ctrl->Push
 
 
 
+void plrsStateMachine::SendUserCommand( string in){
+
+    string dir, par;
+
+    size_t found = in.find( "/" );
+
+    if( found != string::npos ){
+
+        size_t found2 = in.find( "/", found+1);
+
+        if( found2 != string::npos ){
+            dir = in.substr( found+1, found2-found-1);
+            par = in.substr( found2+1, string::npos);
+        }
+    }
+
+    if( dir == "" )
+        PushCommand( 0, in);
+
+    else{
+        int id = ctrl->GetIDByName( dir );
+        if( id != -1 ){
+            PushCommand( id, par);
+            stringstream st;
+            st << "Sending command " << par << " to module " + dir + " ID " << id << "\n";
+            Print( st.str(), ERR);
+        }
+    }
+}
+
+
+
 string plrsStateMachine::PullCommand(){ return ctrl->PullCommand( ID );}
 
 
