@@ -1,4 +1,4 @@
-#include "SerialVtDAQ.h"
+#include "SerialDAQ.h"
 
 #include "plrsBaseData.h"
 
@@ -7,18 +7,28 @@
 #include <cstring>
 
 
+/// creator function for loading the module.
+extern "C" SerialDAQ* create_SerialDAQ( plrsController* c ){ return new SerialDAQ(c);}
+
+
+
+/// destructor function for releasing the module.
+extern "C" void destroy_SerialDAQ( SerialDAQ* p ){ delete p;}
+
+
+
 /// Constructor. buff_depth will control depth of FIFO buffer.
-SerialVtDAQ::SerialVtDAQ( plrsController* ctrl) : plrsModuleDAQ( ctrl){
+SerialDAQ::SerialDAQ( plrsController* ctrl) : plrsModuleDAQ( ctrl){
     buff_depth = 20;
 }
 
 
 /// Destructor. Nothing needs to be done.
-SerialVtDAQ::~SerialVtDAQ(){}
+SerialDAQ::~SerialDAQ(){}
 
 
 
-void SerialVtDAQ::Configure(){
+void SerialDAQ::Configure(){
 
     Print("Configuring serial port...\n", DETAIL);
 
@@ -66,21 +76,21 @@ void SerialVtDAQ::Configure(){
 
 
 
-void SerialVtDAQ::Deconfigure(){
+void SerialDAQ::Deconfigure(){
     Print( "Closing serial port...\n", DETAIL);
     port.serial_close();
 }
 
 
 
-void SerialVtDAQ::PreRun(){
+void SerialDAQ::PreRun(){
     Print( "DAQ starting\n", DETAIL);
     start_time = ctrl->GetMSTimeStamp();
 }
 
 
 
-void SerialVtDAQ::Run(){
+void SerialDAQ::Run(){
     while( GetState()==RUN){
         PreEvent();
         Event();
@@ -92,13 +102,13 @@ void SerialVtDAQ::Run(){
 
 
 
-void SerialVtDAQ::PreEvent(){
+void SerialDAQ::PreEvent(){
     usleep( samp_interval*1000 );
 }
 
 
 
-void SerialVtDAQ::Event(){
+void SerialDAQ::Event(){
 
     void* rdo = 0;
     rdo = PullFromBuffer();
@@ -123,17 +133,17 @@ void SerialVtDAQ::Event(){
 
 
 
-void SerialVtDAQ::PostEvent(){}
+void SerialDAQ::PostEvent(){}
 
 
 
-void SerialVtDAQ::PostRun(){
+void SerialDAQ::PostRun(){
     Print( "DAQ stopping\n", DETAIL);
 }
 
 
 
-int SerialVtDAQ::ReadADC( int pos, int neg){
+int SerialDAQ::ReadADC( int pos, int neg){
     char p = pos+'0';  // 0x30 is 0 in ascii
     char q = neg<0 ? 'N' : neg+'a';  // 0x61 is a in ascii
     port.serial_write( &p, 1);

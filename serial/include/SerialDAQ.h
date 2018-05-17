@@ -14,21 +14,21 @@
 #include "plrsController.h"
 
 
-/// SerialVtDAQ is a module for reading data from serial port.
+/// SerialDAQ is a module for reading data from serial port.
 /// It uses a simple protocol for ADC:
 ///     /adc/{freq N, on, off}
 /// freq parameter will change the sampling frequency N, which is given as interval in ms between sampling.
 /// on and off will turn the adc on and off
 /// By default the hardware device has echo enabled, so it is necessary to mark messages sent to the device by delimiters ( #, /, (space)) so that echoed messages can be identified.
 
-class SerialVtDAQ : public plrsModuleDAQ {
+class SerialDAQ : public plrsModuleDAQ {
 
 public:
 
-    SerialVtDAQ( plrsController* ctrl);
+    SerialDAQ( plrsController* ctrl);
         //!< Constructor
 
-    ~SerialVtDAQ();
+    ~SerialDAQ();
         //!< Destructor
 
 protected:
@@ -76,11 +76,11 @@ private:
 
 
 /// creator function for loading the module.
-extern "C" SerialVtDAQ* create_SerialVtDAQ( plrsController* c ){ return new SerialVtDAQ(c);}
+extern "C" SerialDAQ* create_SerialDAQ( plrsController* c );
 
 
 /// destructor function for releasing the module.
-extern "C" void destroy_SerialVtDAQ( SerialVtDAQ* p ){ delete p;}
+extern "C" void destroy_SerialDAQ( SerialDAQ* p );
 
 
 #endif
