@@ -58,6 +58,9 @@ protected:
     void PostEvent();
 
     int ReadADC( int, int);
+
+    int ReadSPI();
+
 private:
 
     serialport port;
@@ -70,7 +73,10 @@ private:
 
     int start_time;
 
+    bool spi;
+
     vector<int> adc_pchannels;
+
     vector<int> adc_nchannels;
 };
 

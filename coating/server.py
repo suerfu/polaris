@@ -19,18 +19,22 @@ hostname = 'localhost'
 #server_address = '/tmp/12345';
 #server_address = "10.25.250.152"
 
+hostname = 'localhost'  # socket.gethostname()
 port = 6400
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-print >>sys.stderr, 'Connecting to %s' % hostname
 
 try:
-    sock.connect( (hostname, port) )
-except socket.error, msg:
-	print >>sys.stderr, msg
-	sys.exit(1)
+    sock.bind( (hostname, port) )
+except:
+    print "Bind failed"
+    sys.exit(1)
 
-print 'Connection established'
+sock.listen(5)
+
+newsock, newaddr = sock.accept()
+
+print "Accepted connection from: ", newaddr
 
 fig = plt.figure()
 ax1 = fig.add_subplot(2,1,1)
@@ -42,9 +46,8 @@ deqy1 = deque(maxlen=maxlen)
 
 
 def animate(i):
-
     try:
-        data = sock.recv(1000);
+        data = newsock.recv(1000);
         if( data=="" ):
             print "No data received"
             sys.exit(1)
@@ -60,9 +63,17 @@ def animate(i):
 
     ax1.clear()
     ax1.plot(deqx,deqy0)
+    plt.subplot(211)
+    plt.title("Temperature vs Time")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Temperature (C)")
 
     ax2.clear()
     ax2.plot(deqx,deqy1)
+    plt.subplot(212)
+    plt.title("Pressure vs Time")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Pressure (Torr)")
 
 
 ani = animation.FuncAnimation(fig, animate, interval=100)

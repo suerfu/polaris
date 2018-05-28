@@ -63,6 +63,8 @@ void SerialDAQ::Configure(){
 
     samp_interval = cparser->GetInt("/module/"+GetModuleName()+"/sample_interval_ms", 10);
 
+    spi = cparser->GetBool("/module/"+GetModuleName()+"/spi", false);
+
     adc_pchannels = cparser->GetIntArray("/module/"+GetModuleName()+"/adc_pchannels");
     if( adc_pchannels.size()==0 )
         adc_pchannels.push_back(0);
@@ -119,6 +121,10 @@ void SerialDAQ::Event(){
 
     vector<int> adc;
     adc.push_back( int(ctrl->GetMSTimeStamp()-start_time));
+
+    if( spi )
+        adc.push_back( ReadSPI() );
+
     for( unsigned int i=0; i<adc_pchannels.size(); i++ ){
         adc.push_back( ReadADC( adc_pchannels[i], adc_nchannels[i]));
     }
@@ -151,6 +157,25 @@ int SerialDAQ::ReadADC( int pos, int neg){
 
     char r = 'r';
     port.serial_write( &r, 1);
+
+    char buffer[12];
+    int nbytes = -1;
+    while( nbytes<0 ){
+        nbytes = port.serial_read( buffer, 12);
+        if( GetState()!=RUN )
+            break;
+    }
+
+    if( nbytes>=0 )
+    buffer[nbytes] = '\0';
+
+    return atoi( buffer );
+}
+
+
+int SerialDAQ::ReadSPI( ){
+    char p = 's';  // 0x30 is 0 in ascii
+    port.serial_write( &p, 1);
 
     char buffer[12];
     int nbytes = -1;

@@ -8,7 +8,7 @@
 #include "plrsController.h"
 #include "plrsStateMachine.h"
 
-#include "socketunix.h"
+#include "plrsSocket.h"
 
 /// Interface module for polaris.
 
@@ -42,9 +42,11 @@ protected:
 
 private:
 
-    socketunix socket;
+    string hostname;
 
-    list<int> list_client;
+    plrsSocket socket;
+
+    list<int> list_connections;
 
 };
 

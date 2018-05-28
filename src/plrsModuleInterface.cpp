@@ -25,22 +25,39 @@ plrsModuleInterface::~plrsModuleInterface(){;}
 void plrsModuleInterface::Configure(){
 
     string path = "/module/"+GetModuleName()+"/";
+    hostname = cparser->GetString( path+"hostname");
 
-    if( cparser->GetString( path+"type" )=="unix" ){
-
+    if( cparser->GetString( path+"domain" )=="unix" ){
         string filename = cparser->GetString( path+"path");
-        socket.Initialize( filename );
+        socket.InitSocUnix( filename );
+    }
+    else if( cparser->GetString( path+"domain" )=="inet" ){
 
+        int port = cparser->GetInt( path+"port", -1);
+        if( port<2000 || port>65535)
+            Print("Invalid Port number.\n", ERR);
+
+        string hostname = cparser->GetString( path+"hostname");
+
+        socket.InitSocInet( port, hostname );
     }
 
     if( socket ){
-        if( socket.Bind( ) < 0 ){
-            Print("socket bind error\n", ERR);
-            SetStatus( ERROR );
+        if( hostname=="" ){
+            if( socket.Bind() < 0 ){
+                Print("socket bind error\n", ERR);
+                SetStatus( ERROR );
+            }
+            if( socket.Listen() < 0 ){
+                Print("socket listen error\n", ERR);
+                SetStatus( ERROR );
+            }
         }
-        if( socket.Listen( 5) < 0 ){
-            Print("socket listen error\n", ERR);
-            SetStatus( ERROR );
+        else{
+            if( socket.Connect()>=0 ){
+                Print( "Connect to remote server\n", INFO);
+                list_connections.push_back(socket.GetDescriptor() );
+            }
         }
         socket.SetNonBlock();
     }
@@ -62,10 +79,12 @@ void plrsModuleInterface::Run(){
             continue;
         }
 
-        if( (s2 = socket.Accept())>=0 ){
-            socket.SetNonBlock( s2 );
-            list_client.push_back( s2 );
-            s2 = -1;
+        if( hostname=="" ){ // server mode
+            if( (s2 = socket.Accept())>=0 ){
+                socket.SetNonBlock( s2 );
+                list_connections.push_back( s2 );
+                s2 = -1;
+            }
         }
         
         vector<plrsBaseData>* temp = reinterpret_cast< vector<plrsBaseData>*>(rdo);
@@ -74,7 +93,7 @@ void plrsModuleInterface::Run(){
             ss << (*temp)[i] << ' ';
         }
 
-        for( list<int>::iterator itr=list_client.begin(); itr!=list_client.end(); ++itr ){
+        for( list<int>::iterator itr=list_connections.begin(); itr!=list_connections.end(); ++itr ){
 
             int nr = read( *itr, 0, 0);
             if( nr<0 ){
@@ -108,7 +127,7 @@ void plrsModuleInterface::Run(){
             Print( string(command), ERR);
             SendUserCommand( string(command) );
         }
-        list_client.remove( -1 );
+        list_connections.remove( -1 );
 
         PushToBuffer( addr_nxt, rdo );
         rdo = 0;
@@ -117,7 +136,7 @@ void plrsModuleInterface::Run(){
 
 
 void plrsModuleInterface::PostRun(){
-    for( list<int>::iterator itr=list_client.begin(); itr!=list_client.end(); ++itr ){
+    for( list<int>::iterator itr=list_connections.begin(); itr!=list_connections.end(); ++itr ){
         close( *itr );
     }
 }

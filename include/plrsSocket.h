@@ -1,7 +1,8 @@
-#ifndef SOCKETUNIX_H
-    #define SOCKETUNIX_H 1
+#ifndef PLRSSOCKET_H
+    #define PLRSSOCKET_H 1
 
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <signal.h>
 #include <sys/un.h>
 #include <unistd.h>
@@ -12,21 +13,29 @@
 using std::string;
 
 
-class socketunix{
+class plrsSocket{
 
 public:
 
-    socketunix();
+    plrsSocket();
 
-    ~socketunix(){};
+    ~plrsSocket(){};
 
-    int Initialize( string filename);
+    int InitSocUnix( string filename );
+        // initialize a unix-domain socket by filename.
+
+    int InitSocInet( int portno, string hostname="" );
+        // initialize an internet-domain host.
+        // If hostname is specified, will create a client
+        // If no server name, will create a server.
 
     int GetDescriptor(){ return descriptor;}
 
-    int Bind(){ return bind( descriptor, (struct sockaddr*) &soc_addr, sizeof(soc_addr));}
+    int Bind();
 
-    int Listen( int n){ return listen( descriptor, n);}
+    int Connect();
+
+    int Listen( int n=5){ return listen( descriptor, n);}
 
     int SetNonBlock( bool b=true);
 
@@ -61,7 +70,16 @@ private:
 
     int descriptor;
 
-    struct sockaddr_un soc_addr;
+    struct sockaddr* sock_addr;
+
+    struct sockaddr_un soc_addr_un;
+        // UNIX domain socket.
+
+    struct sockaddr_in soc_addr_in;
+        // Internet domain socket.
+
+    int portno;
+        // Port number for Internet domain socket.
 
 };
 

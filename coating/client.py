@@ -14,18 +14,13 @@ index_y0 = 1
 index_y1 = 2
 
 
-hostname = 'localhost'
+sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
-#server_address = '/tmp/12345';
-#server_address = "10.25.250.152"
-
-port = 6400
-
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-print >>sys.stderr, 'Connecting to %s' % hostname
+server_address = '/tmp/12345';
+print >>sys.stderr, 'Connecting to %s' % server_address
 
 try:
-    sock.connect( (hostname, port) )
+    sock.connect(server_address)
 except socket.error, msg:
 	print >>sys.stderr, msg
 	sys.exit(1)
