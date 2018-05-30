@@ -60,7 +60,7 @@ public:
 
     float GetFloat(){
         if( type == DT_FLT )
-            return int(data.f);
+            return data.f;
         else if( type == DT_INT )
             return data.i;
         else if( type == DT_STR ){

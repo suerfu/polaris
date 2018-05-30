@@ -19,7 +19,7 @@ hostname = 'localhost'
 #server_address = '/tmp/12345';
 #server_address = "10.25.250.152"
 
-hostname = 'localhost'  # socket.gethostname()
+hostname = '' # socket.gethostname()
 port = 6400
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

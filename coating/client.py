@@ -14,13 +14,18 @@ index_y0 = 1
 index_y1 = 2
 
 
-sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+hostname = '128.112.85.29'
 
-server_address = '/tmp/12345';
-print >>sys.stderr, 'Connecting to %s' % server_address
+#server_address = '/tmp/12345';
+#server_address = "10.25.250.152"
+
+port = 6400
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+print >>sys.stderr, 'Connecting to %s' % hostname
 
 try:
-    sock.connect(server_address)
+    sock.connect( (hostname, port) )
 except socket.error, msg:
 	print >>sys.stderr, msg
 	sys.exit(1)
@@ -55,9 +60,19 @@ def animate(i):
 
     ax1.clear()
     ax1.plot(deqx,deqy0)
+    plt.subplot(211)
+    plt.title("Temperature vs Time")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Temperature (C)")
+
 
     ax2.clear()
     ax2.plot(deqx,deqy1)
+    plt.subplot(212)
+    plt.title("Pressure vs Time")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Pressure (Torr)")
+
 
 
 ani = animation.FuncAnimation(fig, animate, interval=100)

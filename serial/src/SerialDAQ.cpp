@@ -152,8 +152,8 @@ void SerialDAQ::PostRun(){
 int SerialDAQ::ReadADC( int pos, int neg){
     char p = pos+'0';  // 0x30 is 0 in ascii
     char q = neg<0 ? 'N' : neg+'a';  // 0x61 is a in ascii
-    port.serial_write( &p, 1);
-    port.serial_write( &q, 1);
+//    port.serial_write( &p, 1);
+//    port.serial_write( &q, 1);
 
     char r = 'r';
     port.serial_write( &r, 1);
