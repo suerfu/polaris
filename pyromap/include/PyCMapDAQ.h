@@ -60,7 +60,6 @@ public:
 private:
 
     float GetAvg( vector<int> input );
-    
     float GetVar( vector<int> input );
 
     bool QualityControl( vector<int> input, float thresh = -1);
@@ -69,19 +68,22 @@ private:
 
     serialport port;
 
-    vector<int> scan_ax;
+    float ax_step_to_mm;
+    float az_step_to_mm;
 
+    vector<int> scan_ax;
     vector<int> scan_az;
+
+    int offset_ax;
+    int offset_az;
+
+    bool unit_mm;
 
     int buff_depth;
 
     int navg;
-
     float drift_threshold;
 
-    int offset_ax;
-
-    int offset_az;
 };
 
 

@@ -55,17 +55,41 @@ void PyCMapGraphics::Configure(){
     if( canvas==0 )
         canvas = new TCanvas();
 
-    vector<int> ax = cparser->GetIntArray("/module/daq/range_ax");
-    vector<int> az = cparser->GetIntArray("/module/daq/range_az");
+    vector<int> range_ax = cparser->GetIntArray("/module/daq/range_ax");
+    vector<int> range_az = cparser->GetIntArray("/module/daq/range_az");
 
-    int step_ax = cparser->GetInt("/module/daq/step_ax", 1);
-    int step_az = cparser->GetInt("/module/daq/step_az", 1);
+    float stp_ax = cparser->GetFloat("/module/daq/step_ax", 10);
+    float stp_az = cparser->GetFloat("/module/daq/step_az", 5);
 
-    int nbins_ax = (ax[1]-ax[0]+10)/step_ax;
-    int nbins_az = (az[1]-az[0]+10)/step_az;
+    if( cparser->GetString("/module/daq/unit")=="mm" ){
+        range_ax[0] *= 40;
+        range_ax[1] *= 40;
+        stp_ax = stp_ax*40;
+        range_az[0] /= 360;
+        range_az[0] *= 650;
+        range_az[1] /= 360;
+        range_az[1] *= 650;
+        stp_az *= 650/360;
+    }
+    else if( cparser->GetString("/module/daq/unit")=="cm" ){
+        range_ax[0] *= 400;
+        range_ax[1] *= 400;
+        stp_ax = stp_ax*400;
+        range_az[0] /= 360;
+        range_az[0] *= 650;
+        range_az[1] /= 360;
+        range_az[1] *= 650;
+        stp_az *= 650/360;
+    }
 
-    graph2d = new TH2F("h", "h", nbins_ax, ax[0]-5, ax[1]+5, nbins_az, az[0]-5, az[1]+5);
+    int step_ax = int(stp_ax);
+    int step_az = int(stp_az);
 
+    int nbins_ax = (range_ax[1]-range_ax[0]+10)/step_ax;
+    int nbins_az = (range_az[1]-range_az[0]+10)/step_az;
+
+    graph2d = new TH2F("h", "h", nbins_ax, range_ax[0]-5, range_ax[1]+5, nbins_az, range_az[0]-5, range_az[1]+5);
+    
     gStyle->SetOptStat(0);
 
     // create custom plasma color table

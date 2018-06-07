@@ -13,6 +13,11 @@
 /// Constructor. buff_depth will control depth of FIFO buffer.
 PyCMapDAQ::PyCMapDAQ( plrsController* ctrl) : plrsModuleDAQ( ctrl){
     buff_depth = 100;
+
+    unit_mm = false;
+
+    ax_step_to_mm = 1;
+    az_step_to_mm = 1;
 }
 
 
@@ -64,25 +69,26 @@ void PyCMapDAQ::Configure(){
     float stp_ax = cparser->GetFloat("/module/"+GetModuleName()+"/step_ax", 10);
     float stp_az = cparser->GetFloat("/module/"+GetModuleName()+"/step_az", 5);
 
-    if( cparser->GetString("/module/"+GetModuleName()+"/unit")=="mm" ){
-        range_ax[0] *= 40;
-        range_ax[1] *= 40;
-        stp_ax = stp_ax*40;
-        range_az[0] /= 360;
-        range_az[0] *= 650;
-        range_az[1] /= 360;
-        range_az[1] *= 650;
-        stp_az *= 650/360;
-    }
-    else if( cparser->GetString("/module/"+GetModuleName()+"/unit")=="cm" ){
-        range_ax[0] *= 400;
-        range_ax[1] *= 400;
-        stp_ax = stp_ax*400;
-        range_az[0] /= 360;
-        range_az[0] *= 650;
-        range_az[1] /= 360;
-        range_az[1] *= 650;
-        stp_az *= 650/360;
+    // if unit is specified, then use mm and degree for everything and do conversion.
+
+    // The axial rail has screw pitch of 5 mm, and motor has 200 steps.
+    // Axial travel is 0.025 mm per step.
+
+    // The azimuthal motor has 200 steps, giving a 1.8 degree rotation per step.
+    // The timing belt has 0.08" pitch, and the timing pulley has 24 teeth per rotation.
+    // Azimuthal travel is 0.24384 mm per step.
+
+
+    if( cparser->GetBool( "/module/"+GetModuleName()+"/unit_mm", false) ){
+        ax_step_to_mm = 0.025;
+        az_step_to_mm = 0.24384;
+        unit_mm = true;
+        range_ax[0] /= ax_step_to_mm;
+        range_ax[1] /= ax_step_to_mm;
+        stp_ax /= ax_step_to_mm;
+        range_az[0] /= az_step_to_mm;
+        range_az[1] /= az_step_to_mm;
+        stp_az /= az_step_to_mm;
     }
 
     int step_ax = int(stp_ax);
@@ -216,8 +222,8 @@ void PyCMapDAQ::Event(){
     vector<plrsBaseData>* data = reinterpret_cast< vector<plrsBaseData>*>(rdo);
     data->clear();
     data->push_back( plrsBaseData( int(ctrl->GetMSTimeStamp()-start_time)) );
-    data->push_back( plrsBaseData( scan_ax.back() ));
-    data->push_back( plrsBaseData( scan_az.back() ));
+    data->push_back( plrsBaseData( scan_ax.back() * ax_step_to_mm ));
+    data->push_back( plrsBaseData( scan_az.back() * az_step_to_mm ));
     data->push_back( plrsBaseData( avg ));
     data->push_back( plrsBaseData( std_error ));
     data->push_back( plrsBaseData( std_dev ));
