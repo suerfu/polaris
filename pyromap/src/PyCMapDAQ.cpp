@@ -121,12 +121,12 @@ void PyCMapDAQ::Configure(){
             scan_ax.push_back( ax );
             scan_az.push_back( az );
         }
-        az += step_az;
+        az += step_az;/*
         for( int ax=range_ax[1]; ax>=range_ax[0]; ax-=step_ax ){
             scan_ax.push_back( ax );
             scan_az.push_back( az );
         }
-        az += step_az;
+        az += step_az;*/
     }
     std::reverse( scan_ax.begin(), scan_ax.end());
     std::reverse( scan_az.begin(), scan_az.end());
