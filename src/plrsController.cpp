@@ -92,6 +92,7 @@ void plrsController::StateLoop(){
         switch( GetState() ){
 
             case NUL :
+
                 if( nxt==NUL )
                     break;
 
@@ -112,6 +113,7 @@ void plrsController::StateLoop(){
                 break;
 
             case INIT :
+
                 if( nxt==INIT )
                     break;
 
@@ -143,6 +145,7 @@ void plrsController::StateLoop(){
                 break;
 
             case CONFIG :
+
                 if( nxt==CONFIG )
                     break;
 
@@ -174,10 +177,21 @@ void plrsController::StateLoop(){
                 break;
 
             case RUN :
-                if( GetNextState()==RUN )
+
+                if( nxt==RUN )
                     break;
 
-                else if( GetNextState()==CONFIG ){
+                else if( nxt==RUN_PAUSE ){
+                    Print( "Pausing...\n", INFO);
+                    if( !ChangeState( RUN_PAUSE ) ){
+                        Print( "Error pausing...\n\n", ERR);
+                        SetState( ERROR );
+                    }
+                    else{
+                        Print( "Run paused\n\n", INFO);
+                    }
+                }
+                else if( nxt==CONFIG ){
                     Print( "Stopping run...\n", INFO);
                     if( !ChangeState( CONFIG ) ){
                         Print( "Error stopping run\n\n", ERR);
@@ -193,7 +207,40 @@ void plrsController::StateLoop(){
                 }
                 break;
 
+            case RUN_PAUSE :
+
+                if( nxt==RUN_PAUSE )
+                    break;
+
+                else if( nxt==RUN ){
+                    Print( "Resuming run...\n", INFO);
+                    if( !ChangeState( RUN ) ){
+                        Print( "Error resuming run...\n\n", ERR);
+                        SetState( ERROR );
+                    }
+                    else{
+                        Print( "Run resumed\n\n", INFO);
+                    }
+                }
+                else if( nxt==CONFIG ){
+                    Print( "Stopping run...\n", INFO);
+                    if( !ChangeState( CONFIG ) ){
+                        Print( "Error stopping run\n\n", ERR);
+                        SetState( ERROR );
+                    }
+                    else{
+                        Print( "Run stopped\n\n", INFO);
+                    }
+                }
+                else{
+                    Print( "Invalid state transition from RUN to "+GetStateName( nxt )+"\n\n", ERR);
+                    SetState( ERROR );
+                }
+                break;
+
+
             case END :
+
                 if( !ChangeState( END )){
                     Print( "Error cleaning up\n\n", ERR);
                     SetState( ERROR );
@@ -328,7 +375,7 @@ void plrsController::InsModule( const string& lib, const string& fcn, const stri
         mod.fcnname = fcn;
 
         mod.buffer = circular_buffer< void* >();
-        mod.buffer_cmd = circular_buffer< string >();
+        mod.buffer_cmd = circular_buffer< plrsCommand >();
 
         plrsStateMachine* new_fsm = mod.helper_creator( this );
         new_fsm->SetModuleName( modname );
@@ -371,7 +418,7 @@ void plrsController::InsModule( plrsStateMachine* p, const string& modname ){
         p->SetModuleName( modname);
 
         mod.buffer = circular_buffer< void* >();
-        mod.buffer_cmd = circular_buffer<string>();
+        mod.buffer_cmd = circular_buffer<plrsCommand>();
 
         pthread_t* new_thread = new pthread_t;
         mod.thread = new_thread;
@@ -588,8 +635,18 @@ DAQSTATE plrsController::GetNextState( ){
         case RUN :
             if( CheckStopFlag() )
                 return  CONFIG;
+            else if( CheckPauseFlag() )
+                return RUN_PAUSE;
             else
                 return  RUN;
+
+        case RUN_PAUSE : 
+            if( CheckStopFlag() )
+                return  CONFIG;
+            else if( !CheckPauseFlag() )
+                return RUN;
+            else
+                return RUN_PAUSE;
 
         case END :
             return  END;
@@ -745,7 +802,7 @@ void* plrsController::PullFromBuffer( unsigned int i){
 
 
 
-void plrsController::PushCommand( int i, string c){
+void plrsController::PushCommand( int i, plrsCommand c){
     pthread_mutex_lock( &mux_cmd );
         if( i>=0 && i<int( module.size() ) ){
         	module[i].buffer_cmd.push_back( c );
@@ -755,8 +812,9 @@ void plrsController::PushCommand( int i, string c){
 
 
 
-string plrsController::PullCommand( int i){
-    string cmd;
+plrsCommand plrsController::PullCommand( int i){
+
+    plrsCommand cmd;
 
     pthread_mutex_lock( &mux_cmd);
     	if( i>=0 && i<int( module.size() ) ){
@@ -764,10 +822,10 @@ string plrsController::PullCommand( int i){
         	    cmd = module[i].buffer_cmd.front();
     	        module[i].buffer_cmd.pop_front();
             }
-            else cmd = "";
+            else cmd.cmd = "";
         }
         else
-            cmd = "";
+            cmd.cmd = "";
     pthread_mutex_unlock( &mux_cmd);
 
 	return cmd;
@@ -776,7 +834,10 @@ string plrsController::PullCommand( int i){
 
 
 void plrsController::CommandHandler(){
-    string cmd = PullCommand(0);
+    plrsCommand command = PullCommand(0);
+
+    string cmd = command.cmd;
+    int id = command.from;
 
     if( cmd=="quit" || cmd=="q" ){
         stop_flag = true;
@@ -790,8 +851,18 @@ void plrsController::CommandHandler(){
     else if( cmd=="print" ){
         PrintState( ERR );
     }
+    else if( cmd=="pause" ){
+        pause_req[id]=cmd;
+    }
+    else if( cmd=="resume" ){
+        pause_req.erase( id );
+    }
 }
 
+
+bool plrsController::CheckPauseFlag(){
+    return (pause_req.size()!=0);
+}
 
 
 map< string, int > plrsController::GetModuleTable(){

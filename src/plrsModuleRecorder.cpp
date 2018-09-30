@@ -67,34 +67,24 @@ void plrsModuleRecorder::Deconfigure(){
 
 void plrsModuleRecorder::Run(){
 
-    Print( "run started\n", DETAIL);
+    void* rdo = PullFromBuffer();
 
-    void* rdo=0;
+    if( rdo==0 ){
+        if( wait_time_us<0xffffff )
+            wait_time_us += del_time;
+        usleep( wait_time_us );
+    }
 
-    while( GetState()==RUN ){
-
-        rdo = PullFromBuffer();
-
-        if( rdo==0 ){
-            if( wait_time_us<0xffffff )
-                wait_time_us += del_time;
-            usleep( wait_time_us );
-            continue;
-        }
-        else{
-            if( wait_time_us>del_time )
-                wait_time_us -= del_time;
-        }
+    else{
+        if( wait_time_us>del_time )
+            wait_time_us -= del_time;
 
         if( output_file )
             WriteToFile( rdo );
 
         PushToBuffer( addr_nxt, rdo);
-        rdo = 0;
-
-        sched_yield();
     }
-    Print( "run finished\n", DETAIL);
+
 }
 
 

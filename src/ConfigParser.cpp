@@ -9,26 +9,28 @@ using std::endl;
 using std::string;
 
 
-//! Default constructor, only initialize mutex.
+// Default constructor, only initialize mutex.
 ConfigParser::ConfigParser(){
     Initialize();
     last_print = 0;
 }
 
 
-//! Constructor with filename as argument. The parameters in the file specified is loaded into the file.
+// Constructor with filename as argument. The parameters in the file specified is loaded into the file.
 ConfigParser::ConfigParser( const char* filename){
     Initialize();
     LoadFile( filename);
 }
 
 
-//! Constructor with commandline arguments. Commandlines are also treated as configuration parameters.
-//! The argument specified with --cfg is loaded as config file. Others loaded with directory /cmdl/
+
+// Constructor with commandline arguments. Commandlines are also treated as configuration parameters.
+// The argument specified with --cfg is loaded as config file. Others loaded with directory /cmdl/
 ConfigParser::ConfigParser( int argc, char* argv[]){
     Initialize();
     LoadCmdl( argc, argv );
 }
+
 
 
 void ConfigParser::Serialize( ostream& os){
@@ -136,7 +138,6 @@ void ConfigParser::Deserialize( istream& is){
     uint32_t version = 0;
         // version control
 
-
     is.read( reinterpret_cast<char*>( &header), sizeof(header));
     bytes_read += sizeof(header);
 
@@ -205,7 +206,7 @@ void ConfigParser::Deserialize( istream& is){
 }
 
 
-//! Initialize function so that one does not repeat code in overloaded constructor.
+// Initialize function so that one does not repeat code in overloaded constructor.
 void ConfigParser::Initialize(){
     pthread_mutex_init( &mutex_map, 0);
     pthread_mutex_init( &mutex_cout, 0);
@@ -216,14 +217,14 @@ void ConfigParser::Initialize(){
 }
 
 
-//! Destructor.
+// Destructor.
 ConfigParser::~ConfigParser(){
     pthread_mutex_destroy( &mutex_map);
     log.close();
 }
 
 
-//! Copy constructor
+// Copy constructor
 ConfigParser::ConfigParser( const ConfigParser& rhs){
     Initialize();
     verb = rhs.verb;
@@ -232,7 +233,7 @@ ConfigParser::ConfigParser( const ConfigParser& rhs){
 }
 
 
-//! Assignment operator
+// Assignment operator
 ConfigParser& ConfigParser::operator= ( const ConfigParser& rhs){
     Initialize();
     parameters = rhs.parameters;
@@ -242,8 +243,8 @@ ConfigParser& ConfigParser::operator= ( const ConfigParser& rhs){
 }
 
 
-//! Loads commandline parameters as config parameters, with directory /cmdl.
-//! If it finds option --cfg, it will read the corresponding file.
+
+
 void ConfigParser::LoadCmdl( int argc, char* argv[]){
 
     // Check for the verbosity level specified through commandline and logging.
@@ -308,7 +309,7 @@ void ConfigParser::LoadCmdl( int argc, char* argv[]){
 }
 
 
-//! Load configuration file.
+// Load configuration file.
 int ConfigParser::LoadFile( const string& filename ){
 
     // check if file opened successfully
@@ -431,7 +432,7 @@ int ConfigParser::LoadFile( const string& filename ){
 }
 
 
-//! Read in a string inside a pair of quotation mark.
+// Read in a string inside a pair of quotation mark.
 string ConfigParser::GetQuotedString( istream& file ){
     string val, temp;
     if( file.good() )

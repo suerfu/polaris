@@ -22,17 +22,19 @@ protected:
     void Run();
         //!< Calling this function will plot the data structure pointed to by the pointer in the argument.
 
-    void CommandHandler();
+    //void CommandHandler();
 
     virtual void Draw( void* p){}
 
     virtual void Process( void* p){}
-private:
 
-    bool pause;
+private:
 
     uint32_t refresh_rate;
 
+    uint32_t now;
+
+    uint32_t last_update;
 };
 
 

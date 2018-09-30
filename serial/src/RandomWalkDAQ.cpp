@@ -59,36 +59,26 @@ void RandomWalkDAQ::Run(){
 
     void* p = PullFromBuffer();
 
-    while( GetState()==RUN ){
-    
-        p = PullFromBuffer();
+    if( p!=0 ){
+        int c;
+        vector<plrsBaseData>* data = reinterpret_cast< vector<plrsBaseData>* >( p );
 
-        if( p!=0 ){
-            int c;
-            vector<plrsBaseData>* data = reinterpret_cast< vector<plrsBaseData>* >( p );
+        file.read( (char*)(&c), sizeof(int));
+        int time = (ctrl->GetMSTimeStamp() - start_time);
+        data->clear();
+        data->push_back( plrsBaseData( time ));
 
-            file.read( (char*)(&c), sizeof(int));
-            int time = (ctrl->GetMSTimeStamp() - start_time);
-            data->clear();
-            data->push_back( plrsBaseData( time ));
+        for( int i=0; i<ncol; i++){
+            if( ((c>>i)&0x1)==0 )
+                current_value[i]++;
+            else 
+                current_value[i]--;
 
-            for( int i=0; i<ncol; i++){
-                if( ((c>>i)&0x1)==0 )
-                    current_value[i]++;
-                else 
-                    current_value[i]--;
-
-                int value = current_value[i];
-                data->push_back( plrsBaseData( value ));
-            }
-
-            PushToBuffer( addr_nxt, p );
-
-            p = 0;
+            int value = current_value[i];
+            data->push_back( plrsBaseData( value ));
         }
 
-        sched_yield();
-        CommandHandler();
+        PushToBuffer( addr_nxt, p );
         usleep( sample_intv );
     }
 }

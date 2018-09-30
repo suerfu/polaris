@@ -9,7 +9,7 @@
 
 
 //! States in the polaris state machine. For both state and status.
-enum DAQSTATE { NUL, INIT, CONFIG, RUN, END, ERROR };
+enum DAQSTATE { NUL, INIT, CONFIG, RUN, RUN_PAUSE, END, ERROR };
     //!< DAQ states.
     //!< NUL is the initial default state.
     //!< INIT and CONFIG are the states after initialization (memory allocation, etc.) and configuration (preparing daq parameters).
@@ -19,6 +19,39 @@ enum DAQSTATE { NUL, INIT, CONFIG, RUN, END, ERROR };
 
 
 string GetStateName( DAQSTATE state );
+
+
+class plrsCommand{
+
+public:
+    plrsCommand(){
+        from = -1;
+        cmd = "";
+    };
+
+    plrsCommand( int i, string s){
+        from = i;
+        cmd = s;
+    }
+
+    plrsCommand( const plrsCommand& rhs ){
+        from = rhs.from;
+        cmd = rhs.cmd;
+    }
+
+    ~plrsCommand(){}
+
+    plrsCommand& operator =( const plrsCommand& rhs){
+        from = rhs.from;
+        cmd = rhs.cmd;
+        return *this;
+    }
+
+//private:
+    int from;
+
+    string cmd;
+};
 
 
 class plrsController;   // forward declaration for Module
@@ -51,7 +84,7 @@ typedef struct {
     circular_buffer<void*> buffer;
         //!< Circular buffer allocated to each module. ID-0 reserved.
         //
-	circular_buffer< string > buffer_cmd;
+	circular_buffer< plrsCommand > buffer_cmd;
         //!< Vector of circular buffers for command
         //
 
@@ -141,11 +174,17 @@ protected:
 
     void PushCommand( unsigned int i, string);   //!< Used to send command to controller
 
-    string PullCommand();   //!< Check/retrieve command from controller.
+    void PushCommand( unsigned int i, plrsCommand);   //!< Used to send command to controller
+
+    plrsCommand PullCommand();   //!< Check/retrieve command from controller.
 
     void SendUserCommand( string ); //!< command is specified as string in the format /module-name/command. This function will send the command to specified module. If module is not specified, command is sent to ctrl.
 
     virtual void CommandHandler(){;}  //!< Called to process command stack.
+
+    void SendPauseReq();
+
+    void ClearPauseReq();
 
     // ===================================================================================
 
@@ -185,15 +224,31 @@ protected:
     virtual void Deinitialize(){}
         //!< Called at the beginning of END phase.
 
+    void RunLoop();
+        //!< 
 
     virtual void PreRun(){}
         //!< Function called before the beginning of run.
 
-    virtual void Run();
+    virtual void Run(){
+        PreEvent();
+        Event();
+        PostEvent();
+    }
         //!< Main part of data acquisition.
 
     virtual void PostRun(){}
         //!< Function called after the end of run.
+
+    virtual void Idle();
+
+    virtual void Pause(){
+        Print( GetModuleName()+" pausing...\n", INFO);
+    }
+
+    virtual void Resume(){
+        Print( GetModuleName()+" resuming...\n", INFO);
+    }
 
     virtual void PreEvent(){}
         //!< Function called at the beginning of each event.

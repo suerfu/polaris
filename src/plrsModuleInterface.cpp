@@ -67,71 +67,66 @@ void plrsModuleInterface::Configure(){
 
 void plrsModuleInterface::Run(){
 
-    void* rdo = 0;
+    void* rdo = PullFromBuffer();
+    if( rdo==0 ){
+        usleep(10000);
+        return;
+    }
+
     int s2 = -1;
 
-    while( GetState()==RUN && GetStatus()!=ERROR ){
+    if( hostname=="" ){ // server mode
+        if( (s2 = socket.Accept())>=0 ){
+            socket.SetNonBlock( s2 );
+            list_connections.push_back( s2 );
+            s2 = -1;
+        }
+    }
         
-        rdo = PullFromBuffer();
+    vector<plrsBaseData>* temp = reinterpret_cast< vector<plrsBaseData>*>(rdo);
+    stringstream ss;
+    for( unsigned int i=0; i<temp->size(); i++){
+        ss << (*temp)[i] << ' ';
+    }
 
-        if( rdo==0 ){
-            usleep(10000);
+    for( list<int>::iterator itr=list_connections.begin(); itr!=list_connections.end(); ++itr ){
+
+        int nr = read( *itr, 0, 0);
+        if( nr<0 ){
+            Print( "closing socket due to: "+string( strerror(errno))+"\n", ERR);
+            close( *itr);
+            *itr = -1;
             continue;
         }
 
-        if( hostname=="" ){ // server mode
-            if( (s2 = socket.Accept())>=0 ){
-                socket.SetNonBlock( s2 );
-                list_connections.push_back( s2 );
-                s2 = -1;
-            }
-        }
-        
-        vector<plrsBaseData>* temp = reinterpret_cast< vector<plrsBaseData>*>(rdo);
-        stringstream ss;
-        for( unsigned int i=0; i<temp->size(); i++){
-            ss << (*temp)[i] << ' ';
+        int nbytes = write( *itr, ss.str().c_str(), strlen(ss.str().c_str()) );
+        if( nbytes<0 ){
+            Print( "write error: "+string( strerror(errno))+"\n", ERR);
+            close( *itr);
+            *itr = -1;
+            continue;
         }
 
-        for( list<int>::iterator itr=list_connections.begin(); itr!=list_connections.end(); ++itr ){
-
-            int nr = read( *itr, 0, 0);
-            if( nr<0 ){
-                Print( "closing socket due to: "+string( strerror(errno))+"\n", ERR);
+        char command[256];
+        nbytes = read( *itr, command, 256 );
+        if( nbytes<0 ){
+            if( errno==EAGAIN )
+                continue;
+            else{
+                Print( "read error: "+string( strerror(errno))+"\n", ERR);
                 close( *itr);
                 *itr = -1;
                 continue;
             }
-
-            int nbytes = write( *itr, ss.str().c_str(), strlen(ss.str().c_str()) );
-            if( nbytes<0 ){
-                Print( "write error: "+string( strerror(errno))+"\n", ERR);
-                close( *itr);
-                *itr = -1;
-                continue;
-            }
-
-            char command[256];
-            nbytes = read( *itr, command, 256 );
-            if( nbytes<0 ){
-                if( errno==EAGAIN )
-                    continue;
-                else{
-                    Print( "read error: "+string( strerror(errno))+"\n", ERR);
-                    close( *itr);
-                    *itr = -1;
-                    continue;
-                }
-            }
-            command[nbytes]='\0';
-            Print( string(command), ERR);
-            SendUserCommand( string(command) );
         }
-        list_connections.remove( -1 );
-
-        PushToBuffer( addr_nxt, rdo );
-        rdo = 0;
+        command[nbytes]='\0';
+        Print( string(command), ERR);
+        SendUserCommand( string(command) );
     }
+    list_connections.remove( -1 );
+
+    PushToBuffer( addr_nxt, rdo );
+        rdo = 0;
 }
 
 

@@ -34,18 +34,3 @@ void plrsModuleDAQ::Configure(){ Print("configuring...\n", DETAIL);}
 void plrsModuleDAQ::Deconfigure(){ Print("unconfiguring...\n", DETAIL);}
 
 
-
-void plrsModuleDAQ::PreRun(){ Print("starting DAQ...\n", DETAIL);}
-
-
-
-void plrsModuleDAQ::Run(){ 
-    while( GetState()==RUN )
-        sleep(1);
-}
-
-
-
-void plrsModuleDAQ::PostRun(){ Print("stopping DAQ...\n", DETAIL);}
-
-

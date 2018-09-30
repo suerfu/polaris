@@ -73,10 +73,15 @@ void plrsModuleInput::PreRun(){
 
 
 void plrsModuleInput::Run(){
-    while( GetState()==RUN ){
-        IOHandler();
-        usleep(200*1000);
-    }
+    IOHandler();
+    usleep(200*1000);
+}
+
+
+
+void plrsModuleInput::Idle(){
+    IOHandler();
+    usleep(200*1000);
 }
 
 

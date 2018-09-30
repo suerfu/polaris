@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <set>
 #include <pthread.h>
 #include <chrono>
 
@@ -114,6 +115,10 @@ private:
     DAQSTATE GetNextState();
         //!< Sets the next state.
 
+    std::map< int, std::string > pause_req;
+
+    bool CheckPauseFlag();
+
     bool CheckErrorFlag();   //!< Return whether an error condition exists, either in global state or in any of registered modules.
 
     bool CheckStateConsistency();   //!< Return whether an error condition exists, either in global state or in any of registered modules.
@@ -138,9 +143,9 @@ private:
     void* PullFromBuffer( unsigned int i);  //!< Pulls one raw pointer from buffer denoted by index i.
                                         	//!< 0 is returned if empty, out of range, or invalid caller.
 
-    void PushCommand( int i, string c);  //!< Pushes command into stack.
+    void PushCommand( int i, plrsCommand c);  //!< Pushes command into stack.
 
-    string PullCommand( int i); //!< Gets one command from command stack.
+    plrsCommand PullCommand( int i); //!< Gets one command from command stack.
 
     void CommandHandler();          //!< Called in the event loop to handle commands from IO and other modules.
 

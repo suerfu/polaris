@@ -35,12 +35,6 @@ protected:
 
     virtual void Deconfigure(); //!< Unset hardware setup.
 
-    virtual void PreRun();  //!< Starting DAQ hardware.
-
-    virtual void Run();   //!< Acquire one event.
-
-    virtual void PostRun(); //!< Stop DAQ hardware.
-
 };
 
 extern "C" plrsModuleDAQ* create_plrsModuleDAQ( plrsController* c);

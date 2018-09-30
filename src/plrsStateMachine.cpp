@@ -12,6 +12,7 @@ string GetStateName( DAQSTATE state ){
         case INIT : return "INIT  ";
         case CONFIG : return "CONFIG";
         case RUN : return "RUN   ";
+        case RUN_PAUSE : return "PAUSE ";
         case END : return "END   ";
         case ERROR : return "ERROR ";
         default : return "UNKNOWN";
@@ -85,7 +86,19 @@ void* plrsStateMachine::PullFromBuffer( DAQSTATE st){
 
 
 
-void plrsStateMachine::PushCommand( unsigned int i, string c){ return ctrl->PushCommand( i, c);}
+void plrsStateMachine::PushCommand( unsigned int i, string c){
+    plrsCommand cmd;
+    cmd.cmd = c;
+    cmd.from = ID;
+    return ctrl->PushCommand( i, cmd);
+}
+
+
+
+void plrsStateMachine::PushCommand( unsigned int i, plrsCommand cmd){
+    cmd.from = ID;
+    return ctrl->PushCommand( i, cmd);
+}
 
 
 
@@ -121,8 +134,20 @@ void plrsStateMachine::SendUserCommand( string in){
 
 
 
-string plrsStateMachine::PullCommand(){ return ctrl->PullCommand( ID );}
+plrsCommand plrsStateMachine::PullCommand(){
+    return ctrl->PullCommand( ID );
+}
 
+
+
+void plrsStateMachine::SendPauseReq(){
+    PushCommand( 0, "pause");
+}
+
+
+void plrsStateMachine::ClearPauseReq(){
+    PushCommand( 0, "resume");
+}
 
 
 void plrsStateMachine::EventLoop(){
@@ -234,7 +259,7 @@ void plrsStateMachine::EventLoop(){
 
             case RUN :
                 running = true;
-                Run();
+                RunLoop();
                 Print(GetModuleName()+" Run finished\n", ERR);
                 running = false;
 
@@ -257,11 +282,47 @@ void plrsStateMachine::EventLoop(){
                         break;
                     case RUN :
                         break;
+                    /*
+                    case RUN_PAUSE :
+                        SetStatus( RUN_PAUSE );
+                        Print( GetModuleName()+" pausing...\n", INFO);
+                        break;
+                    */
                     default :
                         invalid_transition = true;
                         break;
                 }
                 break;
+            /*
+            case RUN_PAUSE :
+                if( GetStatus()==ERROR )
+                    break;
+
+                switch( GetState() ){
+                    case CONFIG :
+                        PostRun();
+                        if( GetStatus()!=ERROR ){
+                            SetStatus( CONFIG );
+                        }
+                        else{
+                            Print( "error finishing the run\n", ERR);
+                            SetStatus( ERROR );
+                        }
+                        break;
+                    case ERROR :
+                        SetStatus( ERROR );
+                        break;
+                    case RUN :
+                        Print( GetModuleName()+" resuming...\n", INFO);
+                        break;
+                    case RUN_PAUSE :
+                        break;
+                    default :
+                        invalid_transition = true;
+                        break;
+                }
+                break;
+            */
 
             case END :
                 ok_to_exit = true;
@@ -335,18 +396,37 @@ void plrsStateMachine::GetModuleTable(){
 
 
 
-void plrsStateMachine::Run(){
+void plrsStateMachine::RunLoop(){
 
-    while( GetState()==RUN && GetStatus()!=ERROR ){
+    while( ( GetState()==RUN || GetState()==RUN_PAUSE ) && GetStatus()!=ERROR ){
 
-        PreEvent();
-        Event();
-        PostEvent();
+        if( GetState()==RUN ){
+            if( GetStatus()==RUN_PAUSE ){
+                Resume();
+                SetStatus( RUN );
+            }
+
+            Run();
+
+        }
+        else{
+            if( GetStatus()==RUN ){
+                Pause();
+                SetStatus( RUN_PAUSE );
+            }
+
+            Idle();
+        }
 
         CommandHandler();
         sched_yield();
+
     }
 }
 
 
+
+void plrsStateMachine::Idle(){
+    usleep(100000);
+}
 

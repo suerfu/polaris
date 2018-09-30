@@ -37,6 +37,8 @@ protected:
 
     void Run();
 
+    void Idle();
+
     void PostRun();
 
 private:
