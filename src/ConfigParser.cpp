@@ -1031,3 +1031,13 @@ string getstr(){
     }   
 }
 
+
+
+void ConfigParser::print_timestamp( ostream& os, const time_t* ct ){
+    tm* tm_info = localtime( ct );
+    os << std::setfill('0') << std::setw(2) << tm_info->tm_hour <<":" 
+        << std::setfill('0') << std::setw(2) << tm_info->tm_min << ":"
+        << std::setfill('0') << std::setw(2) << tm_info->tm_sec << "  "
+        << std::setfill(' ') << std::setw(0);
+}
+

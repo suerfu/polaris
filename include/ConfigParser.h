@@ -16,16 +16,18 @@
 
 #include <pthread.h>
 
-//! Verbosity associated with user messages.
+using namespace std;
+
 
 //! Verbosity denotes the importance / detailness of each message.
-//! User modules assigns a verbosity to each of its output messages.
-//! Similarly polaris can be executed with different verbosity.
-//! Only when the user message has a higher verbosity than program's verbosity will the messages be output
+
+//! The output handler has a verbosity level configured during startup.
+//! Each output message also has a verbosity level.
+//! When the output handler has a higher verbosity level than message's, the message is displayed.
+
 enum VERBOSITY{ ERR = 1, INFO = 2, DETAIL = 3, DEBUG = 4};
 
 
-using namespace std;
 
 //! ConfigParser reads configuration file and other commandline arguments and makes them available for each modules.
 
@@ -201,7 +203,7 @@ public:
 
 
     template < class T >
-    void Print( T t, VERBOSITY v);
+    void Print( T t, VERBOSITY v, bool logit=true);
         //!< Fill output message t with verbosity v.
 
     void SetVerbosity( VERBOSITY v) { verb = v;}
@@ -258,32 +260,48 @@ private:
         //!< Time of last output.
 
         //!< Used to prevent putting time stamp on every message.
+
+
+    void print_timestamp( ostream& os, const time_t* ct );
+
+
+    void print_space( ostream& os){
+        os << std::setw(10) << ' ' << std::setw(0);
+    }
+
 };
 
 
 template < class T >
-void ConfigParser::Print( T t, VERBOSITY v){
+void ConfigParser::Print( T t, VERBOSITY v, bool logit){
     if( verb>=v ){
         pthread_mutex_lock( &mutex_cout);
             time_t ct = time(0);
 
             if( last_print == ct){
-                std::cout << "          " << t<< std::setfill(' ') << std::setw(0);
-                if( log )
-                    log << "          " << t<< std::setfill(' ') << std::setw(0);
+                if( v==ERR )
+                    std::cout << "\033[1;31m";
+                print_space( std::cout );
+                std::cout << t;
+                std::cout << "\033[0m";
+
+                if( log && logit ){
+                    print_space( log );
+                    log << t << endl;
+                }
             }
             else{
                 last_print = ct;
-                tm* tm_info = localtime(&ct);
-                std::cout << std::setfill('0') << std::setw(2) << tm_info->tm_hour <<":"
-                          << std::setfill('0') << std::setw(2) << tm_info->tm_min << ":"
-                          << std::setfill('0') << std::setw(2) << tm_info->tm_sec << "  " << t
-                          << std::setfill(' ') << std::setw(0);
-                if( log )
-                    log << std::setfill('0') << std::setw(2) << tm_info->tm_hour <<":"
-                        << std::setfill('0') << std::setw(2) << tm_info->tm_min << ":"
-                        << std::setfill('0') << std::setw(2) << tm_info->tm_sec << "  " << t
-                        << std::setfill(' ') << std::setw(0);
+                print_timestamp( std::cout, &ct );
+                if( v==ERR )
+                    std::cout << "\033[1;31m";
+                std::cout << t;
+                std::cout << "\033[0m";
+
+                if( log && logit ){
+                    print_timestamp( log, &ct );
+                    log << t;
+                }
             }
         pthread_mutex_unlock( &mutex_cout);
     }

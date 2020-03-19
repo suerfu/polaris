@@ -365,8 +365,13 @@ void plrsStateMachine::ConfigDataFlow(){
 
     string nxt = "";
     nxt = cparser->GetString( "/module/"+self+"/next_module" );
+    if( nxt=="" )
+        nxt = cparser->GetString( "/module/"+self+"/next" );
+
     string prv = "";
     prv = cparser->GetString( "/module/"+self+"/prev_module" );
+    if( prv=="" )
+        prv = cparser->GetString( "/module/"+self+"/prev" );
 
     // next destination in data flow is explicitly specified.
     if( nxt!="" ){

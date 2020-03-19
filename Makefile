@@ -3,7 +3,7 @@ CC = g++  -g #-pg # -g
 NAME = polaris
 
 SOMAJOR = 1
-SOMINOR = 0
+SOMINOR = 2
 LIBNAME = lib$(NAME).so.${SOMAJOR}.${SOMINOR}
 
 PREFIX = /usr/local
