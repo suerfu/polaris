@@ -1,16 +1,18 @@
 # polaris
 
 
-polaris is a general-purpose, modular and versatile framework for facilitating small- to mid-scale data acquisition.
+polaris is a general-purpose, modular and versatile framework for facilitating small- to mid-scale data acquisition. In the polaris framework:
 
 * User-specific functionalities are implemented as runtime dynamic loaded libraries (DLL) referred to as modules.
-* Each module is launched as a separate thread for efficient multi-tasking.
+* Each module is launched as a separate thread for fast and efficient multi-tasking.
 * polaris framework acts as a common platform that coordinates the transition of user modules throughout different phases of DAQ, and the communication between them.
 
 
 ### Requirement
 
-polaris is based on Linux OS and Linux API. Library dependence is minimal: in addition to standard C++ libraries, it requires pthread and dll at the least. If inter-process/inter-host communication is needed, the default interface module is linux socket. However user can easily implement an interface module that utilizes other socket libraries.
+polaris is based on Linux OS and Linux API. Library dependence is minimal: in addition to standard C++ libraries, it requires pthread and dll at the least.
+
+If inter-process/inter-host communication is needed, the default interface module is linux socket. However user can easily implement an interface module that utilizes other socket libraries.
 
 The graphics of the test module depends on ROOT ( a data analysis framework mainly used in high energy physics), and if one wishes to run the visualization, ROOT libraries should be installed. If python is installed instead, user can also visualiza data by sending it to python program via inter-host communication module.
 
@@ -40,50 +42,57 @@ To install polaris, under polaris directory type in terminal
 This will copy polaris libraries and executables to /usr/local directory.
 
 
-## Running polaris
+### Running polaris
 
 The syntax for running polaris main program is:
 
     polaris --cfg config-file.cfg --foo bar0 bar1
 
-where config-file.cfg contains information about 1) where to find the libraries of user modules, and 2) custom parameters passed to the user modules. Modules should be created by inheriting from plrs StateMachine such that all modules consistently and coherently follow a number of global rules.
+where config-file.cfg contains information about
+1. where to find the libraries containing user modules, and
+2. custom parameters passed to the user modules.
 
-Additional arguments can be passed along through the commandline interface. In the above case, the additional argument is available via ConfigParser as
+Modules should be created by inheriting from plrs StateMachine such that all modules consistently and coherently follow a number of global rules.
 
-    /cmdl/foo : bar0 bar1
+Additional arbitrary arguments can be passed along through the commandline interface. In the above case, the additional argument is equivalent to the following line in the config file
 
-These values (bar0, bar1) is stored as array of strings and transformed depending on the type of the data by different Get methods. For details, please refer to ConfigParser.
+    /cmdl/foo : bar0 bar1,
 
-## Creating custom polaris module
+These values (bar0, bar1) is stored as array of strings and transformed depending on the type of the data by different Get methods. For details, please refer to later section on ConfigParser.
 
-Every custom module must inherit from plrsStateMachine object to make sure everything is coherent and consistent in terms of 1) state transition and 2) inter-module communication.
+## Creating Custom Module
+
+Every custom module must inherit from plrsStateMachine object to make sure everything is coherent and consistent in terms of 
+1. state transition and
+2. inter-module communication.
 
 ### State transition
 polaris uses finite-state-machine (FSM) architecture: the state of the system must be one of (NULL, INIT, CONFIG, RUN, END, ERROR). Users specify what the module should be doing at each transition and in each state by implementing certain functions. For example, the function 
-
-    void Configure()
+```c++
+void Configure()
+```
 
 is invoked when the state transitions from INIT to CONFIG. And likewise the functions
-
-    void PreRun()
-    void Run()
-    void PostRun()
-
+```c++
+void PreRun()
+void Run()
+void PostRun()
+````
 are invoded in order when the state goes into the RUN state and then back to CONFIG state when the run is finished.
 
 The FSM architecture ensures that multiple different modules have well-defined behaviors at each stages of the program execution. For example, by implementing COnfigure() method, a run is never started without first configuring the device.
 
 #### State vs Status
 
-polaris framework distinguishes State from Status: although both have exact set of values (NULL, INIT, CONFIG, RUN, END, ERROR), State is a global property that indicates **which state polaris want you to go to** while Status is a local property that indicates **which state user module is currently in**. State is obtained by each module by 
+polaris distinguishes *State* from *Status*: although both have exact set of values (*NULL, INIT, CONFIG, RUN, END, ERROR*), *State* is a global property that indicates **which state polaris want you to go to** while *Status* is a local property that indicates **which state user module is currently in**. *State* is obtained by each module by 
 ```c++
 DAQSTATE GetState()
 ```
-However, since state is a global property, it cannot be set by user modules. On the other hand, user modules report its status to polaris by using
+However, since *State* is a global property, it cannot be set by user modules. On the other hand, user modules report its *Status* to polaris by using
 ```c++
 void SetStatus( DAQSTATE state)
 ```
-If user module sets a wrong (inconsistent) status, reports error status, or didn't go to the target status in time, the global state goes to ERROR and the program tries to terminate safely.
+If user module sets a wrong (inconsistent) status, reports error status, or didn't manage go to the target status in time, the global state goes to *ERROR* and the program tries to terminate safely.
 
 Therefore, when implementing certain functions, it is necessary to report that local state transition is successful, or check that global state is still consistent with local status. For example, at the end of Configure() function, one should call SetStatus(CONFIG) to report that configuration was successful:
 ```c++
@@ -92,11 +101,11 @@ void Configure(){
     SetStatus( CONFIG );
 }
 ```
-And in the Run() method, one should make sure that global state is still RUN between different events:
+Similarly, in the Run() method, one should make sure that global *State* is still *RUN* between successive events:
 ```c++
 void Run(){
     while( GetState()==RUN ){
-        // Acquire your data.
+        // Acquire your data and process events
     }
 }
 ```
@@ -184,7 +193,7 @@ Config file should also follow a number of rules:
   * Each lines end with a comma(,), unless the line is the last line in a directory.
   * Multiple values can be passed by using space between different values.
 
-### Running examples
+### Example
 
 To run the tests, first change directory to serial and type
 
