@@ -217,6 +217,12 @@ protected:
 
     ConfigParser* cparser;
 
+    ConfigParser* GetConfigParser(){
+        return cparser;
+    }
+        //!< Used to access configuration file inside the program.
+        //!< This approach is better than using protected variable.
+
     map< string, int > module_table;
 
     void GetModuleTable();  //!< Get information on other modules.
