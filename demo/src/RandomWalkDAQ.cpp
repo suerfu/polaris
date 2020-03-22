@@ -19,6 +19,14 @@ void RandomWalkDAQ::Configure(){
     It should open the file for read.
     */
 
+    // First find out how frequent to read.
+    sample_intv = GetConfigParser()->GetFloat("/module/"+GetModuleName()+"/sample_interval", 1000);
+        // sample interval in micro-second. Default value is 1 ms.
+
+    // Next get the size of buffer
+    buff_depth = GetConfigParser()->GetFloat("/module/"+GetModuleName()+"/buff_depth", 1000);
+
+
     file.open("/dev/urandom");
     
     if(!file){
@@ -33,6 +41,7 @@ void RandomWalkDAQ::Configure(){
         for( int i=0; i<buff_depth; ++i )
             PushToBuffer( id, new int);
     }
+
 }
 
 
@@ -60,29 +69,32 @@ void RandomWalkDAQ::PreRun(){
 
 void RandomWalkDAQ::Run(){
 
-    void* p = PullFromBuffer();
-        // Try to obtain a pointer to memory.
-
     int next = GetNextID();
         // ID of the module to pass data to.
     if( next<0 )
         next = GetID();
             // If next module is not specified, then set up for loop back.
 
-    if( p!=0 ){
-        // There is something valid in buffer
 
-        int c;
-        file.read( (char*)(&c), sizeof(int));
-            // read a random number
-        
-        int* recast = reinterpret_cast<int*>(p);
-            // the pointer must be casted before use
+    void* p = PullFromBuffer();
+        // Try to obtain a pointer to memory.
 
-        *recast = c;
-        PushToBuffer( next, p );
-        usleep( sample_intv );
-            // sleep for specified interval
+    while( GetState()==RUN ){
+        if( p==0 )
+            p = PullFromBuffer();
+
+        if( p!=0 ){
+            // There is something valid in buffer
+
+            file.read( (char*)(p), sizeof(int));
+                // read a random number
+
+            PushToBuffer( next, p );
+            p = 0;
+            usleep( sample_intv );
+                // sleep for specified interval
+
+        }
     }
 }
 

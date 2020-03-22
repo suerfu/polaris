@@ -95,7 +95,7 @@ void plrsModuleInput::PostRun(){
 void plrsModuleInput::IOHandler(){
     string input = getstr();
     if( input!="" ){
-        Print( "typed "+input+"\n", INFO);
+        Print( "typed "+input+"\n", DETAIL);
         SendUserCommand( input );
         input = "";
     }

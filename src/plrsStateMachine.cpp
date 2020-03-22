@@ -260,7 +260,7 @@ void plrsStateMachine::EventLoop(){
             case RUN :
                 running = true;
                 RunLoop();
-                Print(GetModuleName()+" Run finished\n", ERR);
+                Print(GetModuleName()+" run finished\n", INFO);
                 running = false;
 
                 if( GetStatus()==ERROR )
