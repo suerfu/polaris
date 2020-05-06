@@ -55,11 +55,6 @@ void plrsModuleInput::Configure(){
 }
 
 
-
-void plrsModuleInput::ConfigDataFlow(){;}
-
-
-
 void plrsModuleInput::Deconfigure(){
     Print( "unconfiguring\n", DETAIL);
 }
@@ -78,7 +73,6 @@ void plrsModuleInput::Run(){
 }
 
 
-
 void plrsModuleInput::Idle(){
     IOHandler();
     usleep(200*1000);
@@ -95,7 +89,7 @@ void plrsModuleInput::PostRun(){
 void plrsModuleInput::IOHandler(){
     string input = getstr();
     if( input!="" ){
-        Print( "typed "+input+"\n", INFO);
+        Print( "typed "+input+"\n", DETAIL);
         SendUserCommand( input );
         input = "";
     }

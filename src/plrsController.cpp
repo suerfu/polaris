@@ -125,7 +125,7 @@ void plrsController::StateLoop(){
                         SetState( ERROR );
                     }
                     else{
-                        Print( "Modules configured\n\n", INFO);
+                        Print( "Modules configured\n\n", DETAIL);
                     }
                 }
                 else if( nxt==END ){
@@ -135,7 +135,7 @@ void plrsController::StateLoop(){
                         SetState( ERROR );
                     }
                     else{
-                        Print( "Modules deinitialized\n\n", INFO);
+                        Print( "Modules deinitialized\n\n", DETAIL);
                     }
                 }
                 else{
@@ -151,13 +151,13 @@ void plrsController::StateLoop(){
 
                 else if( nxt==RUN ){
                     start_time = GetTimeStamp();
-                    Print( "Run starting ...\n", INFO);
+                    Print( "Run starting...\n", INFO);
                     if( !ChangeState( RUN ) ){
                         Print( "Error starting run\n\n", ERR);
                         SetState( ERROR );
                     }
                     else{
-                        Print( "Run started\n\n", INFO);
+                        Print( "Run started\n\n", DETAIL);
                     }
                 }
                 else if( nxt==INIT ){
@@ -167,7 +167,7 @@ void plrsController::StateLoop(){
                         SetState( ERROR );
                     }
                     else{
-                        Print( "Modules deconfigured\n\n", INFO);
+                        Print( "Modules deconfigured\n\n", DETAIL);
                     }
                 }
                 else{
@@ -198,7 +198,7 @@ void plrsController::StateLoop(){
                         SetState( ERROR );
                     }
                     else{
-                        Print( "Run stopped\n\n", INFO);
+                        Print( "Run stopped\n\n", DETAIL);
                     }
                 }
                 else{
@@ -219,7 +219,7 @@ void plrsController::StateLoop(){
                         SetState( ERROR );
                     }
                     else{
-                        Print( "Run resumed\n\n", INFO);
+                        Print( "Run resumed\n\n", DETAIL);
                     }
                 }
                 else if( nxt==CONFIG ){
@@ -229,7 +229,7 @@ void plrsController::StateLoop(){
                         SetState( ERROR );
                     }
                     else{
-                        Print( "Run stopped\n\n", INFO);
+                        Print( "Run stopped\n\n", DETAIL);
                     }
                 }
                 else{
@@ -609,6 +609,36 @@ void plrsController::PrintState( VERBOSITY v ){
 }
 
 
+void plrsController::PrintBufferStatus( VERBOSITY v ){
+
+    stringstream ss;
+
+    int len = 4;    // length of longest module name
+
+    pthread_mutex_lock( &mux_fsm);
+        for( unsigned int i=0; i<module.size(); i++)
+            if( module[i].fsm!=0 ){
+                int l = int(module[i].fsm->GetModuleName().length());
+                len = len > l ? len : l;
+            }
+    pthread_mutex_unlock( &mux_fsm);
+
+    pthread_mutex_lock( &mux_fsm);
+        for( unsigned int i=0; i<module.size(); i++){
+            if( module[i].fsm==0 )
+                ss << "\n\t\t" << i << " ctrl" << string(len+1-4, ' ') << module[i].buffer.size() << '\n';
+            else{
+                int l = module[i].fsm->GetModuleName().length();
+                ss << "\t\t" << i << ' ' << module[i].fsm->GetModuleName() << string(len+1-l, ' ') << module[i].buffer.size() <<'\n';
+            }
+        }
+    pthread_mutex_unlock( &mux_fsm);
+
+    ss << "\n";
+    Print( ss.str(), v);
+}
+
+
 
 // The flow of state machine is controlled here.
 DAQSTATE plrsController::GetNextState( ){
@@ -848,8 +878,11 @@ void plrsController::CommandHandler(){
         stop_flag = true;
     }
 
-    else if( cmd=="print" ){
-        PrintState( ERR );
+    else if( cmd=="stat" ){
+        PrintState( INFO );
+    }
+    else if( cmd=="buff" ){
+        PrintBufferStatus( INFO );
     }
     else if( cmd=="pause" ){
         pause_req[id]=cmd;

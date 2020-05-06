@@ -14,7 +14,9 @@ extern "C" void destroy_plrsModuleInterface( plrsModuleInterface* p ){ delete p;
 
 
 
-plrsModuleInterface::plrsModuleInterface( plrsController* c) : plrsStateMachine(c){}
+plrsModuleInterface::plrsModuleInterface( plrsController* c) : plrsStateMachine(c){
+    payload = 1000;
+}
 
 
 
@@ -25,31 +27,51 @@ plrsModuleInterface::~plrsModuleInterface(){;}
 void plrsModuleInterface::Configure(){
 
     string path = "/module/"+GetModuleName()+"/";
-    hostname = cparser->GetString( path+"hostname");
 
-    if( cparser->GetString( path+"domain" )=="unix" ){
-        string filename = cparser->GetString( path+"path");
+    // Find out where to send data.
+    // 
+    string next_module = GetConfigParser()->GetString( path+"next", "");
+        // if not found, returns default value of ""
+    if( next_module!="" ){
+        next_addr = ctrl->GetIDByName( next_module );   // nonnegative if valid
+    }
+    if( next_module=="" || next_addr<0 ){
+        next_addr = ctrl->GetIDByName( this->GetModuleName() );
+    }
+
+    // Next get payload.
+    // This is the number of data points to send at a time.
+    payload = GetConfigParser()->GetInt( path+"payload", payload);
+
+
+    hostname = GetConfigParser()->GetString( path+"hostname", "");
+
+    // If Unix socket, then get the filename.
+    // If internet socket, get IP address and initialize.
+    if( GetConfigParser()->GetString( path+"domain" )=="unix" ){
+        string filename = GetConfigParser()->GetString( path+"path");
         socket.InitSocUnix( filename );
     }
-    else if( cparser->GetString( path+"domain" )=="inet" ){
+    else if( GetConfigParser()->GetString( path+"domain" )=="inet" ){
 
-        int port = cparser->GetInt( path+"port", -1);
+        int port = GetConfigParser()->GetInt( path+"port", -1);
         if( port<2000 || port>65535)
             Print("Invalid Port number.\n", ERR);
 
-        string hostname = cparser->GetString( path+"hostname");
-
+        string hostname = GetConfigParser()->GetString( path+"hostname");
         socket.InitSocInet( port, hostname );
     }
+    Print("Socket initialized.\n", DETAIL);
 
+    // If hostname is not specified, then it is run as a server. Otherwise as a client.
     if( socket ){
         if( hostname=="" ){
             if( socket.Bind() < 0 ){
-                Print("socket bind error\n", ERR);
+                Print("Socket bind error\n", ERR);
                 SetStatus( ERROR );
             }
             if( socket.Listen() < 0 ){
-                Print("socket listen error\n", ERR);
+                Print("Socket listen error\n", ERR);
                 SetStatus( ERROR );
             }
         }
@@ -57,6 +79,10 @@ void plrsModuleInterface::Configure(){
             if( socket.Connect()>=0 ){
                 Print( "Connect to remote server\n", INFO);
                 list_connections.push_back(socket.GetDescriptor() );
+            }
+            else{
+                Print("Socket failed to connect\n", ERR);
+                SetStatus( ERROR );            
             }
         }
         socket.SetNonBlock();
@@ -69,7 +95,6 @@ void plrsModuleInterface::Run(){
 
     void* rdo = PullFromBuffer();
     if( rdo==0 ){
-        usleep(10000);
         return;
     }
 
@@ -80,53 +105,36 @@ void plrsModuleInterface::Run(){
             socket.SetNonBlock( s2 );
             list_connections.push_back( s2 );
             s2 = -1;
+            Print("Connection accepted.\n", ERR);
         }
     }
-        
-    vector<plrsBaseData>* temp = reinterpret_cast< vector<plrsBaseData>*>(rdo);
-    stringstream ss;
-    for( unsigned int i=0; i<temp->size(); i++){
-        ss << (*temp)[i] << ' ';
-    }
+    
+    int* temp = reinterpret_cast< int*>(rdo);
+    data.push_back( *temp );
 
-    for( list<int>::iterator itr=list_connections.begin(); itr!=list_connections.end(); ++itr ){
-
-        int nr = read( *itr, 0, 0);
-        if( nr<0 ){
-            Print( "closing socket due to: "+string( strerror(errno))+"\n", ERR);
-            close( *itr);
-            *itr = -1;
-            continue;
+    if( data.size()>= payload ){
+        stringstream ss;
+        for( unsigned int i=0; i<data.size(); i++){
+            ss << data[i] << ' ';
         }
 
-        int nbytes = write( *itr, ss.str().c_str(), strlen(ss.str().c_str()) );
-        if( nbytes<0 ){
-            Print( "write error: "+string( strerror(errno))+"\n", ERR);
-            close( *itr);
-            *itr = -1;
-            continue;
-        }
-
-        char command[256];
-        nbytes = read( *itr, command, 256 );
-        if( nbytes<0 ){
-            if( errno==EAGAIN )
-                continue;
-            else{
-                Print( "read error: "+string( strerror(errno))+"\n", ERR);
+        for( list<int>::iterator itr=list_connections.begin(); itr!=list_connections.end(); ++itr ){
+            // write the data stream to remote.
+            int nbytes = write( *itr, ss.str().c_str(), strlen( ss.str().c_str() ) );
+            if( nbytes<0 ){
+                Print( "write error: " + string( strerror(errno)) + "\n", ERR);
                 close( *itr);
                 *itr = -1;
                 continue;
             }
         }
-        command[nbytes]='\0';
-        Print( string(command), ERR);
-        SendUserCommand( string(command) );
-    }
-    list_connections.remove( -1 );
 
-    PushToBuffer( addr_nxt, rdo );
-        rdo = 0;
+        list_connections.remove( -1 );            // -1 corresponds to broken connection.
+        data.clear();
+    }
+
+    PushToBuffer( next_addr, rdo );
+
 }
 
 

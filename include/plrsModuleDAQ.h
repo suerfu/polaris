@@ -22,18 +22,24 @@ public:
     plrsModuleDAQ( plrsController* ctrl);
         //!< It initializes all hardwares according to the parameters passed in by the parameter handler obtained from controller.
 
-    virtual ~plrsModuleDAQ();
+    ~plrsModuleDAQ();
         //!< Destructor.
 
 protected:
 
-    virtual void Initialize();  //!< Initialize parameters and establish connections, etc.
+    void Initialize();  //!< Initialize parameters and establish connections, etc.
 
-    virtual void Configure();   //!< Do necessary hardware setup.
+    void Configure();   //!< Do necessary hardware setup.
 
-    virtual void Deinitialize();     //!< Called in the END phase to deallocate resources.
+    void Deinitialize();     //!< Called in the END phase to deallocate resources.
 
-    virtual void Deconfigure(); //!< Unset hardware setup.
+    void Deconfigure(); //!< Unset hardware setup.
+    
+    void PreRun();  //!< Prepare for run. Called only once.
+
+    void Run(); //!< Actual event loop. Called continuously.
+
+    void PostRun(); //!< Called after run is finished. Called only once.
 
 };
 

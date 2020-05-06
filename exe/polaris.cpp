@@ -18,14 +18,15 @@ int main( int argc, char* argv[] ){
     ConfigParser map;
     map.LoadCmdl( argc, argv);
 
-    if( map.GetString("/cmdl/quiet")=="" && map.GetString("/cmdl/q")=="" )
-        PrintLogo();
+    //if( map.GetString("/cmdl/quiet")=="" && map.GetString("/cmdl/q")=="" )
+    //    PrintLogo();
     if( map.GetString("/cmdl/cfg")=="" ){
         PrintUsage(argc, argv);
         return -1;
     }
 
-    map.Print();
+    if( map.GetString("/cmdl/detail")!="" || map.GetString("/cmdl/debug")!="" )
+        map.Print();
 
     plrsController ctrl( &map );
 

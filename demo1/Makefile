@@ -2,7 +2,7 @@
 
 CC = g++ -pg # -g
 
-NAME = serial
+NAME = random
 LIBNAME = lib$(NAME).so
 
 
