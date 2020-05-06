@@ -7,7 +7,7 @@ SOMINOR = 1
 
 LIBNAME = lib$(NAME).so.${SOMAJOR}.${SOMINOR}
 
-PREFIX = /usr/local
+PREFIX = /usr
 
 CPP_FILES = $(wildcard src/*.cpp)
 OBJ_FILES = $(patsubst %.cpp, %.o, $(CPP_FILES))
