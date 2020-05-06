@@ -846,6 +846,7 @@ void plrsController::CommandHandler(){
 
     else if( cmd=="max-evt"){
         stop_flag = true;
+        Print( "Maximum number of event reached\n", INFO);
     }
 
     else if( cmd=="print" ){
