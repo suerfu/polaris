@@ -8,16 +8,12 @@ import matplotlib.animation as animation
 import numpy as np
 from collections import deque
 
-maxlen = 250
-index_x0 = 0
-index_y0 = 1
-index_y1 = 2
+frame = 100
+maxlen = 100
 
 
 hostname = 'localhost'
-
-#server_address = '/tmp/12345';
-#server_address = "10.25.250.152"
+#hostname = "10.25.250.152"
 
 port = 6400
 
@@ -32,37 +28,29 @@ except socket.error, msg:
 
 print 'Connection established'
 
+
 fig = plt.figure()
-ax1 = fig.add_subplot(2,1,1)
-ax2 = fig.add_subplot(2,1,2)
 
-deqx = deque(maxlen=maxlen)
-deqy0 = deque(maxlen=maxlen)
-deqy1 = deque(maxlen=maxlen)
-
+deqx = deque( maxlen=maxlen )
+deqy = deque( maxlen=maxlen )
 
 def animate(i):
 
     try:
-        data = sock.recv(1000);
+        data = sock.recv( frame );
         if( data=="" ):
             print "No data received"
             sys.exit(1)
-        #print data
 
     except:
         print "Problem receiving data from server"
         sys.exit(1)
 
-    deqx.append( float( data.split()[index_x0]))
-    deqy0.append( float( data.split()[index_y0]) )
-    deqy1.append( float( data.split()[index_y1]) )
+#    array = [float(x) for x in data.split()]
+    deqy.append( float( data.split()[0]) )
 
-    ax1.clear()
-    ax1.plot(deqx,deqy0)
-
-    ax2.clear()
-    ax2.plot(deqx,deqy1)
+    fig.clear()
+    plt.plot(deqy )
 
 
 ani = animation.FuncAnimation(fig, animate, interval=100)

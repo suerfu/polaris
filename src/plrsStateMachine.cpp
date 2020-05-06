@@ -23,8 +23,8 @@ string GetStateName( DAQSTATE state ){
 
 plrsStateMachine::plrsStateMachine( plrsController* h ) :  module_name("tbd"), state(NUL), status(NUL), ctrl(h) {
     cparser = h->GetConfigParser();
-    addr_prv = -1;
-    addr_nxt = -1;
+    //addr_prv = -1;
+    //addr_nxt = -1;
 }
 
 
@@ -198,7 +198,7 @@ void plrsStateMachine::EventLoop(){
                         break;
                     case CONFIG :
                         module_table = ctrl->GetModuleTable();
-                        ConfigDataFlow(); 
+                        //ConfigDataFlow(); 
                         Configure();
                         configured = true;
                         if( GetStatus()!=ERROR ){
@@ -260,7 +260,7 @@ void plrsStateMachine::EventLoop(){
             case RUN :
                 running = true;
                 RunLoop();
-                Print(GetModuleName()+" Run finished\n", ERR);
+                Print(GetModuleName()+" run finished\n", INFO);
                 running = false;
 
                 if( GetStatus()==ERROR )
@@ -358,15 +358,22 @@ void plrsStateMachine::EventLoop(){
 
 
 
-
+// Currently this method is not used.
+// The data flow should be established manually.
+/*
 void plrsStateMachine::ConfigDataFlow(){
 
     string self = GetModuleName();
 
     string nxt = "";
     nxt = cparser->GetString( "/module/"+self+"/next_module" );
+    if( nxt=="" )
+        nxt = cparser->GetString( "/module/"+self+"/next" );
+
     string prv = "";
     prv = cparser->GetString( "/module/"+self+"/prev_module" );
+    if( prv=="" )
+        prv = cparser->GetString( "/module/"+self+"/prev" );
 
     // next destination in data flow is explicitly specified.
     if( nxt!="" ){
@@ -387,7 +394,7 @@ void plrsStateMachine::ConfigDataFlow(){
         addr_nxt = ctrl->GetIDByName( this->GetModuleName());
     }
 }
-
+*/
 
 
 void plrsStateMachine::GetModuleTable(){
@@ -420,7 +427,6 @@ void plrsStateMachine::RunLoop(){
 
         CommandHandler();
         sched_yield();
-
     }
 }
 

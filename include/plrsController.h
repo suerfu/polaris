@@ -134,6 +134,8 @@ private:
 
     void PrintState( VERBOSITY v = ERR ); //!< print the states of all current modules
 
+    void PrintBufferStatus( VERBOSITY v = ERR ); //!< print the occupancies of circular buffers of different modules
+
     // ============ inter-module communication ====================
 
 

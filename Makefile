@@ -2,8 +2,9 @@ CC = g++  -g #-pg # -g
 
 NAME = polaris
 
-SOMAJOR = 1
-SOMINOR = 0
+SOMAJOR = 2
+SOMINOR = 1
+
 LIBNAME = lib$(NAME).so.${SOMAJOR}.${SOMINOR}
 
 PREFIX = /usr/local
@@ -44,6 +45,7 @@ install:
 	@cp ./include/*.h ${PREFIX}/include/$(NAME)
 	@cp ./lib/$(LIBNAME) ${PREFIX}/lib/
 	@cp ./${NAME} $(PREFIX)/bin/
+	@ln -sf ${PREFIX}/lib/${LIBNAME} ${PREFIX}/lib/lib${NAME}.so.${SOMAJOR}
 	@ln -sf ${PREFIX}/lib/lib${NAME}.so.${SOMAJOR} ${PREFIX}/lib/lib${NAME}.so
 	@sudo ldconfig -n ${PREFIX}/lib/lib${NAME}.so
 

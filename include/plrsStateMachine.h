@@ -121,14 +121,39 @@ public:
     plrsStateMachine( plrsController* rhs );  //!< Constructor. Register in Controller and obtain an ID.    
     virtual ~plrsStateMachine();    //!< Destructor. Remove it's own pointer from Controller.
 
-    DAQSTATE GetState();    //!< Return the state of this FSM.
-	DAQSTATE GetStatus();   //!< Return the local status of this FSM.
+    DAQSTATE GetState();
+        //!< Return the state of this FSM.
+        //!< State is a global property that every module should be in.
+
+	DAQSTATE GetStatus();
+        //!< Return the local status of this FSM.
+        //!< Status is a local property.
+        //!< Every module should take actions to be in status consistent with state.
 
     std::string GetModuleName(){
         return module_name;
     }
         //!< Return module name. Used by ctrl to identify different modules.
 
+    int GetID(){
+        return ID;
+    }
+        //!< Returns the module ID of the current module.
+
+//    int GetNextID(){
+//        return addr_nxt;
+//    }
+        //!< Returns module ID of the module specified in /module/foo/next_module or /module/foo/next
+
+//    int GetPrevID(){
+//        return addr_prv;
+//    }
+        //!< Returns module ID of the module specified in /module/foo/prev_module or /module/foo/prev
+
+    string GetVersion(){
+        return "2.1.1";
+    }
+        //!< Returns version number for tracking changes.
 
 private:
 
@@ -192,6 +217,12 @@ protected:
 
     ConfigParser* cparser;
 
+    ConfigParser* GetConfigParser(){
+        return cparser;
+    }
+        //!< Used to access configuration file inside the program.
+        //!< This approach is better than using protected variable.
+
     map< string, int > module_table;
 
     void GetModuleTable();  //!< Get information on other modules.
@@ -211,7 +242,7 @@ protected:
     virtual void Initialize(){}
         //!< Called at the beginning to change state to INIT.
 
-    virtual void ConfigDataFlow();
+    //virtual void ConfigDataFlow();
         //!< Called to establish data flow between state machines.
         //!< This function is called after module table is initialized and before Configure is called.
 

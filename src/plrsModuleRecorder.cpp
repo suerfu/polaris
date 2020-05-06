@@ -69,20 +69,23 @@ void plrsModuleRecorder::Run(){
 
     void* rdo = PullFromBuffer();
 
-    if( rdo==0 ){
-        if( wait_time_us<0xffffff )
-            wait_time_us += del_time;
-        usleep( wait_time_us );
-    }
+    while( GetState()==RUN ){
 
-    else{
-        if( wait_time_us>del_time )
-            wait_time_us -= del_time;
+        if( rdo==0 ){
+            if( wait_time_us<0xffffff )
+                wait_time_us += del_time;
+            usleep( wait_time_us );
+        }
 
-        if( output_file )
-            WriteToFile( rdo );
+        else{
+            if( wait_time_us>del_time )
+                wait_time_us -= del_time;
 
-        PushToBuffer( addr_nxt, rdo);
+            if( output_file )
+                WriteToFile( rdo );
+
+            PushToBuffer( addr_nxt, rdo);
+        }
     }
 
 }

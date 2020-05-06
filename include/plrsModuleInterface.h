@@ -36,18 +36,21 @@ protected:
 
 	void Deconfigure();
 
-protected:
-
-    ofstream output_file;
-
 private:
 
     string hostname;
 
     plrsSocket socket;
+        //!< Convenient data structure to hold connection information.
 
     list<int> list_connections;
+        //!< contains socket descriptors for established connection.
 
+    vector<int> data;
+
+    int next_addr;
+
+    unsigned int payload;
 };
 
 

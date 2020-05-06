@@ -27,7 +27,7 @@ protected:
 
     void Configure();
 
-    void ConfigDataFlow();
+    //void ConfigDataFlow();
 
 	void Deconfigure();
 
