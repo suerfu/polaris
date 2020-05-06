@@ -55,11 +55,6 @@ void plrsModuleInput::Configure(){
 }
 
 
-
-void plrsModuleInput::ConfigDataFlow(){;}
-
-
-
 void plrsModuleInput::Deconfigure(){
     Print( "unconfiguring\n", DETAIL);
 }
@@ -76,7 +71,6 @@ void plrsModuleInput::Run(){
     IOHandler();
     usleep(200*1000);
 }
-
 
 
 void plrsModuleInput::Idle(){

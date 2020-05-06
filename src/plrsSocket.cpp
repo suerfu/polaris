@@ -56,7 +56,7 @@ int plrsSocket::InitSocInet( int port, string hostname){
     else{
         struct hostent* server = gethostbyname( hostname.c_str() );
         if( server==0 ){
-            std::cerr << "error getting host by name" << std::endl;
+            std::cerr << "Error getting host by name" << std::endl;
         }
 
         struct in_addr **addr_list = (struct in_addr**) server->h_addr_list;
@@ -79,7 +79,7 @@ int plrsSocket::InitSocInet( int port, string hostname){
 int plrsSocket::Bind(){
     int i = bind( descriptor, sock_addr, sizeof(soc_addr_in));
     if( i<0 ){
-        std::cerr << "error binding: " << strerror(errno) << std::endl;
+        std::cerr << "Error binding: " << strerror(errno) << std::endl;
         return -1;
     }
     return i;
@@ -89,7 +89,7 @@ int plrsSocket::Bind(){
 int plrsSocket::Connect(){
     int i = connect( descriptor, (struct sockaddr*) &soc_addr_in, sizeof(soc_addr_in) );
     if( i<0 ){
-        std::cerr << "error connecting: " << strerror(errno) << std::endl;
+        std::cerr << "Error connecting: " << strerror(errno) << std::endl;
         return -1;
     }
     return i;

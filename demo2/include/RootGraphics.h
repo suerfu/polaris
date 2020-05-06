@@ -14,9 +14,9 @@
 #include "TH2F.h"
 
 
-/// RootGraphics module uses ROOT to visualize time-series data ( with second resolution).
+/// RootGraphics module uses ROOT to visualize time-series data.
 /// The module expects single integer data to be sent from previous module.
-/// Internally it contains two vectors of type int with twice as large capacity as requested.
+/// Internally it contains a vector of type int with twice as large capacity as requested.
 /// It will continuously push new data to back and plotting is done at different starting locations.
 /// Once incoming data fills up all spaces, vector will erase previous members once.
 
@@ -59,7 +59,7 @@ struct CanvasInfo{
 };
 
 
-class RootGraphics : public plrsModuleGraphics{
+class RootGraphics : public plrsStateMachine /*ModuleGraphics*/{
 
 public:
 
@@ -83,37 +83,32 @@ protected:
         //!< Called when module goes into END state from RUN 
 
     void PreRun();
-        //!< Will configure canvas and graphs. If vector is full, it will also erase previous elements and reallocates.
+        //!< Will configure canvas and graphs.
 
-    void Process( void* p);
-        //!< Called every iteration. If there are data that must be processed, use this function.
-        //!< Here Process is used to push new data into memory used for plotting.
+    void Run();
 
-    void Draw( void* p);
-        //!< Draw method will be called at the refresh rate specified by config file and plrsModuleGraphics.
-        //!< Do not place any sensitive data in this method as it might not be processed.
+    void PostRun();
 
-    virtual void Clear();
-        //!< Clear the graphics
-
-    void Divide();
-        //!< Divide Canvas into rows and columns.
+    void Draw();
+        //!< This method actually clears the canvas, sets the points on TGraph and draws.
 
 private:
 
+    int next_addr;
+
     TApplication* app;
 
-    vector<CanvasInfo> canvas;
-        // ROOT canvas arrays since there could be multiple plots
-
-    vector<GraphInfo> grinfo;
-
+    TCanvas* canvas;
+    
+    TGraph* graph;
 
     unsigned int max_size;
+        // number of data points to accumulate before plotting.
 
-    std::map< int, std::vector<Float_t> > data;
+    std::vector<int> data;
         // 2-D array to store data.
 };
+
 
 extern "C" RootGraphics* create_RootGraphics( plrsController* c){ return new RootGraphics(c);}
 

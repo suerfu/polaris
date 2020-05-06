@@ -25,12 +25,21 @@ protected:
 protected:
 
     ofstream output_file;
+
+private:
+
+    int next_addr;
+        //!< ID of the next module to which data pointer is passed to.
+
+    int current_value;
+        //!< Used to keep track of current value.
+        //!< It is incremented or decremented ramdomly.
+
 };
 
 
 
 extern "C" RandomWalkRecorder* create_RandomWalkRecorder( plrsController* c );
-
 
 
 extern "C" void destroy_RandomWalkRecorder( RandomWalkRecorder* p );

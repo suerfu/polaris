@@ -140,18 +140,18 @@ public:
     }
         //!< Returns the module ID of the current module.
 
-    int GetNextID(){
-        return addr_nxt;
-    }
+//    int GetNextID(){
+//        return addr_nxt;
+//    }
         //!< Returns module ID of the module specified in /module/foo/next_module or /module/foo/next
 
-    int GetPrevID(){
-        return addr_prv;
-    }
+//    int GetPrevID(){
+//        return addr_prv;
+//    }
         //!< Returns module ID of the module specified in /module/foo/prev_module or /module/foo/prev
 
     string GetVersion(){
-        return "1.1.2";
+        return "2.1.1";
     }
         //!< Returns version number for tracking changes.
 
@@ -242,7 +242,7 @@ protected:
     virtual void Initialize(){}
         //!< Called at the beginning to change state to INIT.
 
-    virtual void ConfigDataFlow();
+    //virtual void ConfigDataFlow();
         //!< Called to establish data flow between state machines.
         //!< This function is called after module table is initialized and before Configure is called.
 
