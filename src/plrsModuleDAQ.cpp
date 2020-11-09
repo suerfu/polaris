@@ -21,34 +21,34 @@ plrsModuleDAQ::~plrsModuleDAQ(){}
 
 
 void plrsModuleDAQ::Initialize(){
-    Print( "Initialize() called.\n", ERR);
+    Print( "Initialize() called.\n", DETAIL);
 }
 
 
 
 void plrsModuleDAQ::Deinitialize(){
-    Print( "Deinitialize called.\n", ERR);
+    Print( "Deinitialize called.\n", DETAIL);
 }
 
 
 
 void plrsModuleDAQ::Configure(){
-    Print("Configure() called.\n", ERR);
+    Print("Configure() called.\n", DETAIL);
 }
 
 
 void plrsModuleDAQ::Deconfigure(){
-    Print("Deconfigure() called.\n", ERR);
+    Print("Deconfigure() called.\n", DETAIL);
 }
 
 
 void plrsModuleDAQ::PreRun(){
-    Print("PreRun() called.\n", ERR);
+    Print("PreRun() called.\n", DETAIL);
 }
 
 
 void plrsModuleDAQ::PostRun(){
-    Print("PostRun() called.\n", ERR);
+    Print("PostRun() called.\n", DETAIL);
 }
 
 

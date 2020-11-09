@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cstring>
+#include <dlfcn.h>
 
 #include "ConfigParser.h"
 #include "plrsController.h"
@@ -9,7 +10,7 @@
 
 using namespace std;
 
-void PrintUsage( int argc, char* argv[]);
+void PrintUsage( int argc, char* argv[], string libname = "" );
 
 void PrintLogo();
 
@@ -18,15 +19,21 @@ int main( int argc, char* argv[] ){
     ConfigParser map;
     map.LoadCmdl( argc, argv);
 
-    //if( map.GetString("/cmdl/quiet")=="" && map.GetString("/cmdl/q")=="" )
-    //    PrintLogo();
     if( map.GetString("/cmdl/cfg")=="" ){
-        PrintUsage(argc, argv);
+        
+        string libname = map.GetString("/cmdl/help");
+        
+        if( libname=="" || libname=="true" )
+            PrintUsage( argc, argv);
+        else
+            PrintUsage( argc, argv, libname);
+
         return -1;
     }
 
-    if( map.GetString("/cmdl/detail")!="" || map.GetString("/cmdl/debug")!="" )
+    if( map.GetString("/cmdl/detail")!="" || map.GetString("/cmdl/debug")!="" ){
         map.Print();
+    }
 
     plrsController ctrl( &map );
 
@@ -35,35 +42,42 @@ int main( int argc, char* argv[] ){
     return 0;
 }
 
-void PrintLogo(){
-    string star = "*\n";
-    int offset = 20;
-    cout << "\n";
-    cout << setw(offset) << " " << star;
-    cout << setw(offset) << " "<< setw(5) << star;
-    cout << endl;
-    cout << setw(offset) << " "<< setw(7) << star;
-    cout << endl;
-    cout << setw(offset) << " "<< setw(9) << star;
-    cout << endl;
-    cout << setw(offset) << " "<< setw(7) << star;
-    cout << setw(offset) << " "<< setw(16) << star;
-    cout << setw(offset) << " "<< setw(12) << star;
-    cout << "\n";
-}
+void PrintUsage( int argc, char* argv[], string libname ){
 
-void PrintUsage( int argc, char* argv[] ){
-    int width1 = strlen("usage: ");
-    int width2 = strlen("usage: ") + strlen( argv[0] );
-    cout<< setw(5) << "usage: " << argv[0] << " --cfg foo.cfg [--option] [parameter(s)]" <<endl;
-    cout<< setw(width1) << " opt: " <<" ";
-    cout<< setw(width2-width1-1) << " " << " --cfg,  specifies configuration file.\n"<<endl;
-    cout<< setw(width2) << " " << " --time,  specifies max run time in seconds.\n"<<endl; 
-    cout<< setw(width2) << " " << " --verbose, -v, --detail,  messages with verbosity of at least DETAIL will be printed.\n"<<endl; 
-    cout<< setw(width2) << " " << " --quiet, -q,  only errors will be printed.\n"<<endl; 
-    cout<< setw(width2) << " " << " --log foo.log,  the same messages on the standard output is recorded in the specified file.\n"<<endl; 
-    cout<< setw(width2) << " " << "Above are system commandline arguments."<<endl; 
-    cout<< setw(width2) << " " << "Users can specify custom commandline arguments as --xxx foo or -x for custom modules."<<endl; 
-    cout<< setw(width2) << " " << "-- is used for multi-characters while - is used for a single character."<<endl; 
-    cout<< setw(width2) << " " << "Inside the framework, commandline arguments are accessed through ConfigParser with directory /cmdl/xxx."<<endl; 
+    cout << "\nUsage: " << "polaris   --cfg foo.cfg [--option [parameter1...]]\n";
+    cout << "\nOptions:\n";
+    cout << "\t--cfg,\n\t\tSpecifies configuration file.\n";
+    cout << "\t-t, --time,\n\t\tSpecifies max run time in seconds.\n"; 
+    cout << "\t-v, --verbose, --detail,\n\t\tMessages with verbosity of at least DETAIL will be printed.\n"; 
+    cout << "\t-q, --quiet,\n\t\tOnly errors will be printed.\n"; 
+    cout << "\t--log foo.log,\n\t\tThe same messages on the standard output is recorded in foo.log.\n";
+
+    if( libname=="" ){
+        cout << "\t--help [libxxx.so],\n\t\tRetrieves and prints the commandline usage of polaris module in libxxx.so if specified.\n";
+        cout << "\t\tUsers can specify custom commandline arguments as --xxx foo or -x for custom modules.\n"; 
+        cout << "\t\t-- is used for multi-characters while - is used for a single character.\n"; 
+        cout << "\t\tInside the framework, commandline arguments are accessed through ConfigParser with directory /cmdl/.\n";
+        cout << "\t\tThese custom commandline arguments are defined by each module/library to be used.\n"; 
+        cout << "\t\tIf defined, these parameters can be retrieved and printed to screen by specifying the library name after --help.\n\n";
+    }
+
+    else{
+        void* handle;
+        void (*PU)( void ); // function to print usage.
+
+        handle = dlopen( libname.c_str(), RTLD_NOW);
+        if( !handle ){
+            cout << "Error: Unable to open "+libname+": "+dlerror() << "\n" << endl;
+            return;
+        }
+
+        PU = reinterpret_cast< void (*)(void) >( dlsym( handle, "PrintUsage") );
+        if( !PU ){
+            cout << "Error: Unable to retrieve PrintUsage() from "+libname+": "+dlerror() << "\n" << endl;
+        }
+        else{
+            PU();
+        }
+        dlclose( handle);
+    }
 }

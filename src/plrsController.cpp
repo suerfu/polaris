@@ -874,8 +874,9 @@ void plrsController::CommandHandler(){
         Print( "Stop signal received\n", INFO);
     }
 
-    else if( cmd=="max-evt"){
+    else if( cmd=="max-evt" && GetState()==RUN ){
         stop_flag = true;
+        Print( "Maximum number of event reached\n", INFO);
     }
 
     else if( cmd=="stat" ){
