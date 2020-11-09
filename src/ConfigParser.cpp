@@ -601,6 +601,16 @@ vector< float > ConfigParser::GetFloatArray( const string& name){
 }
 
 
+vector< double > ConfigParser::GetDoubleArray( const string& name){
+    vector<string> str = GetStrArray( name );
+    vector<double> double_array;
+    for( vector<string>::iterator itr = str.begin(); itr!=str.end(); ++itr){
+        double_array.push_back( std::stod(*itr) );
+    }
+    return double_array;
+}
+
+
 
 vector< bool > ConfigParser::GetBoolArray( const string& name){
     vector<string> str = GetStrArray( name );
@@ -633,7 +643,7 @@ int ConfigParser::GetInt( const string& name, int def){
     if( found )
         return a;
     else{
-        stringstream ss;    ss << def;
+        //stringstream ss;    ss << def;
         //Print( "ConfigParser : cannot find "+name+", using default value "+ss.str()+".\n", ERR);
         return def;
     }
@@ -660,7 +670,33 @@ float ConfigParser::GetFloat( const string& name, float def){
     if( found )
         return a;
     else{
-        stringstream ss;    ss << def;
+        //stringstream ss;    ss << def;
+        //Print( "ConfigParser : cannot find "+name+", using default value "+ss.str()+".\n", ERR);
+        return def;
+    }
+}
+
+
+double ConfigParser::GetDouble( const string& name, bool* found){
+    string s = GetString( name);
+    if( s=="" ){
+        *found = false;
+        return 0;
+    }
+    else
+        *found = true;
+    return stod( s );
+}
+
+
+
+double ConfigParser::GetDouble( const string& name, double def){
+    bool found = false;
+    double a = GetDouble( name, &found);
+    if( found )
+        return a;
+    else{
+        //stringstream ss;    ss << def;
         //Print( "ConfigParser : cannot find "+name+", using default value "+ss.str()+".\n", ERR);
         return def;
     }

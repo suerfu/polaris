@@ -128,6 +128,12 @@ public:
         //!< Return multiple parameters as vector of floats.
 
         //!< Empty vector is returned if not found.
+    
+    // double
+    vector<double> GetDoubleArray( const string& name );
+        //!< Return multiple parameters as vector of doubles.
+
+        //!< Empty vector is returned if not found.
 
     // bool
     vector<bool> GetBoolArray( const string& name ); 
@@ -151,6 +157,12 @@ public:
         //!< Returns the parameter with specified name as float. Will set found true if the key exists. Otherwise it is set as false.
 
     float GetFloat( const string& name, float def); 
+        //!< Returns the parameter with specified name as float. If parameter is not found, default value is returned instead.
+
+    double GetDouble( const string& name, bool* found); 
+        //!< Returns the parameter with specified name as double. found is set true if key exists. Otherwise it is set as false.
+
+    double GetDouble( const string& name, double def); 
         //!< Returns the parameter with specified name as float. If parameter is not found, default value is returned instead.
 
     bool GetBool( const string& name, bool* found); 
