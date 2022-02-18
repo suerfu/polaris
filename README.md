@@ -7,6 +7,7 @@ polaris is a general-purpose, modular and versatile framework for facilitating s
 * Each module is launched as a separate thread for fast and efficient multi-tasking.
 * polaris framework acts as a common platform that coordinates the transition of user modules throughout different phases of DAQ, and the communication between them.
 
+NOTE: if this program is used in your experiment, please cite the following work: *Suerfu, B., 2018. Polaris: a general-purpose, modular data acquisition framework. Journal of Instrumentation, 13(12), p.T12004.*
 
 ### Requirement
 
