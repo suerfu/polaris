@@ -36,7 +36,7 @@ plrsController::plrsController( ConfigParser* m) : cparser(m){
     module.push_back( ctrl);
     module_table[ "ctrl" ] = 0;
 
-    if( !cparser->GetBool("/cmdl/disable-input", false) ){
+    if( !cparser->GetBool("/cmdl/disable-input", false) && !cparser->GetBool("/cmdl/no-input", false) ){
         InsModule( new plrsModuleInput( this ), "input" );
     }
 
