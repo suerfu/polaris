@@ -1,30 +1,63 @@
-cmake_minimum_required( VERSION 3.2 )
+cmake_minimum_required(VERSION 3.10)
+project(polaris)
 
-if (POLICY CMP0048)
-    cmake_policy(SET CMP0048 NEW)
-endif (POLICY CMP0048)
+set(SOMAJOR 2)
+set(SOMINOR 1)
+set(LIBNAME "lib${PROJECT_NAME}.so.${SOMAJOR}.${SOMINOR}")
 
-project( polaris VERSION 2.1.0 )
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "-Wall")
 
+# Include directories
+include_directories(include)
 
-SET( CMAKE_CXX_STANDARD 11)
-SET( CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-Wall -std=c++11 -lpthread -ldl" )
-#find_package( Threads )
+# Collect source files
+file(GLOB CPP_FILES "src/*.cpp")
 
+# Create library
+add_library(${PROJECT_NAME} SHARED ${CPP_FILES})
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    OUTPUT_NAME "${PROJECT_NAME}"
+    VERSION "${SOMAJOR}.${SOMINOR}"
+    SOVERSION "${SOMAJOR}"
+)
 
-include_directories( ./include )
-file( GLOB INCLUDES "include/*.h" )
-file( GLOB SOURCES "src/*.cpp" )
+# Linker flags
+target_link_libraries(${PROJECT_NAME} pthread dl)
 
+# Build the executable
+add_executable(${PROJECT_NAME}_exec exe/${PROJECT_NAME}.cpp)
+target_link_libraries(${PROJECT_NAME}_exec ${PROJECT_NAME})
 
-add_library( polaris SHARED ${SOURCES} )
-install( TARGETS polaris EXPORT polarisTargets )
-install( FILES ${includes} DESTINATION polaris/include )
-install( EXPORT polarisTargets FILE polaris-config.cmake DESTINATION lib/cmake/polaris )
+# Installation prefix
+set(INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE PATH "Installation directory prefix")
 
+# Installation
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_exec
+    RUNTIME DESTINATION ${INSTALL_PREFIX}/bin
+    LIBRARY DESTINATION ${INSTALL_PREFIX}/lib
+    ARCHIVE DESTINATION ${INSTALL_PREFIX}/lib
+)
+install(DIRECTORY include/ DESTINATION ${INSTALL_PREFIX}/include/${PROJECT_NAME})
 
-add_executable( polaris-bin exe/polaris.cpp ${SOURCES})
-#target_link_libraries( polaris Threads::Threads )
-set_target_properties( polaris-bin PROPERTIES OUTPUT_NAME polaris )
-install( TARGETS polaris-bin )
+# Create symbolic links for library versions
+install(CODE "execute_process(COMMAND ln -sf ${INSTALL_PREFIX}/lib/lib${PROJECT_NAME}.so.${SOMAJOR}.${SOMINOR} ${INSTALL_PREFIX}/lib/lib${PROJECT_NAME}.so.${SOMAJOR})")
+install(CODE "execute_process(COMMAND ln -sf ${INSTALL_PREFIX}/lib/lib${PROJECT_NAME}.so.${SOMAJOR} ${INSTALL_PREFIX}/lib/lib${PROJECT_NAME}.so)")
+
+# Uninstall target
+add_custom_target(uninstall
+    COMMAND xargs rm < install_manifest.txt
+    COMMAND rm -rf ${INSTALL_PREFIX}/include/${PROJECT_NAME}
+    VERBATIM
+)
+
+# Clean target
+add_custom_target(clean-all
+    COMMAND ${CMAKE_MAKE_PROGRAM} clean
+    COMMAND rm -rf ${CMAKE_BINARY_DIR}/CMakeFiles
+    COMMAND rm -rf ${CMAKE_BINARY_DIR}/Makefile
+    COMMAND rm -rf ${CMAKE_BINARY_DIR}/cmake_install.cmake
+    COMMAND rm -rf ${PROJECT_NAME}_exec
+    VERBATIM
+)
 
