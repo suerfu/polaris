@@ -46,7 +46,7 @@ void plrsModuleRecorder::Configure(){
             return;
         }
         else{
-            Print( "opened file "+filename+" for writing output\n", INFO);
+            Print( "Opened file "+filename+" for writing output\n", INFO);
         }
     }
 
@@ -58,7 +58,7 @@ void plrsModuleRecorder::Configure(){
 
 
 void plrsModuleRecorder::Deconfigure(){
-    Print( "unconfiguring...\n", DETAIL);
+    Print( "Deconfiguring...\n", DETAIL);
     if( output_file.is_open())
         output_file.close();
 }

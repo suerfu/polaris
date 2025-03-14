@@ -17,7 +17,7 @@ plrsModuleInput::~plrsModuleInput(){
 
 void plrsModuleInput::Initialize(){
 
-    Print( "initializing\n", DETAIL);
+    Print( "Initializing\n", DETAIL);
 
     if( GetState()!=ERROR )
         SetStatus( INIT );
@@ -34,7 +34,7 @@ void plrsModuleInput::Initialize(){
 
 
 void plrsModuleInput::Deinitialize(){
-    Print( "cleaning up...\n", DETAIL);
+    Print( "Deinitializing...\n", DETAIL);
 }
 
 
@@ -46,7 +46,7 @@ void plrsModuleInput::Configure(){
         SetStatus( ERROR );
         return;
     }
-    Print( "configuring...\n", DETAIL);
+    Print( "Configuring...\n", DETAIL);
 
     while( GetState()==CONFIG ){
         IOHandler();
@@ -56,13 +56,12 @@ void plrsModuleInput::Configure(){
 
 
 void plrsModuleInput::Deconfigure(){
-    Print( "unconfiguring\n", DETAIL);
+    Print( "Deconfiguring\n", DETAIL);
 }
 
 
-
 void plrsModuleInput::PreRun(){
-    Print( "runing...\n", DETAIL);
+    Print( "Running...\n", DETAIL);
 }
 
 
@@ -81,7 +80,7 @@ void plrsModuleInput::Idle(){
 
 
 void plrsModuleInput::PostRun(){
-    Print( "ending run...\n", DETAIL);
+    Print( "Ending run...\n", DETAIL);
 }
 
 
@@ -89,7 +88,7 @@ void plrsModuleInput::PostRun(){
 void plrsModuleInput::IOHandler(){
     string input = getstr();
     if( input!="" ){
-        Print( "typed "+input+"\n", DETAIL);
+        Print( "User typed "+input+"\n", DETAIL);
         SendUserCommand( input );
         input = "";
     }

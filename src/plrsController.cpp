@@ -80,8 +80,9 @@ void plrsController::StateLoop(){
 
     while( 1 ){
 
-        if( GetState()==END )
+        if( GetState()==END ){
             break;
+        }
         else if( GetState()==ERROR ){
             ChangeState( ERROR );
             break;
@@ -163,7 +164,7 @@ void plrsController::StateLoop(){
                 else if( nxt==INIT ){
                     Print( "Deconfiguring modules...\n", INFO);
                     if( !ChangeState( INIT ) ){
-                        Print( "Error unconfiguring modules\n\n", ERR);
+                        Print( "Error deconfiguring modules\n\n", ERR);
                         SetState( ERROR );
                     }
                     else{
@@ -353,14 +354,14 @@ void plrsController::InsModule( const string& lib, const string& fcn, const stri
 
     mod.helper_creator = (creator) dlsym( mod.handle, ("create_"+fcn).c_str());
     if ((error = dlerror()) != 0)  {
-        Print( "cannot find creator function create_"+fcn+'\t'+string(error)+"\n", ERR);
+        Print( "Cannot find creator function create_"+fcn+'\t'+string(error)+"\n", ERR);
         ChangeState(ERROR);
         return;
     }
 
     mod.helper_destroyer = (destroyer) dlsym( mod.handle, ("destroy_"+fcn).c_str());
     if ( (error=dlerror()) != 0 )  {
-        Print( "cannot find destroyer function destroy_"+fcn+'\t'+string(error)+"\n", ERR);
+        Print( "Cannot find destroyer function destroy_"+fcn+'\t'+string(error)+"\n", ERR);
         ChangeState(ERROR);
         return;
     }

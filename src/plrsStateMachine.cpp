@@ -178,7 +178,7 @@ void plrsStateMachine::EventLoop(){
                             SetStatus( INIT );
                         }
                         else{
-                            Print("failed to initialize\n", ERR);
+                            Print("Failed to initialize\n", ERR);
                             SetStatus( ERROR );
                         }
                         break;
@@ -205,7 +205,7 @@ void plrsStateMachine::EventLoop(){
                             SetStatus(CONFIG);
                         }
                         else{
-                            Print( "failed to configure\n", ERR);
+                            Print( "Failed to configure\n", ERR);
                             SetStatus( ERROR );
                         }
                         break;
@@ -234,7 +234,7 @@ void plrsStateMachine::EventLoop(){
                             SetStatus( INIT );
                         }
                         else{
-                            Print( "failed to unconfigure\n", ERR);
+                            Print( "Failed to deconfigure\n", ERR);
                             SetStatus( ERROR );
                         }
                         break;
@@ -244,7 +244,7 @@ void plrsStateMachine::EventLoop(){
                             SetStatus( RUN );
                         }
                         else{
-                            Print( "error while starting run\n", ERR);
+                            Print( "Error while starting run\n", ERR);
                             SetStatus( ERROR );
                         }
                         break;
@@ -273,7 +273,7 @@ void plrsStateMachine::EventLoop(){
                             SetStatus( CONFIG );
                         }
                         else{
-                            Print( "error finishing the run\n", ERR);
+                            Print( "Error finishing the run\n", ERR);
                             SetStatus( ERROR );
                         }
                         break;
@@ -305,7 +305,7 @@ void plrsStateMachine::EventLoop(){
                             SetStatus( CONFIG );
                         }
                         else{
-                            Print( "error finishing the run\n", ERR);
+                            Print( "Error finishing the run\n", ERR);
                             SetStatus( ERROR );
                         }
                         break;
@@ -347,7 +347,7 @@ void plrsStateMachine::EventLoop(){
         }
 
         if( invalid_transition ){
-            Print( "invalid state transition from "+GetStateName(GetStatus())+" to "+GetStateName(GetState())+"\n", ERR);
+            Print( "Invalid state transition from "+GetStateName(GetStatus())+" to "+GetStateName(GetState())+"\n", ERR);
             invalid_transition = false;
         }
         usleep(100000);
@@ -385,12 +385,12 @@ void plrsStateMachine::ConfigDataFlow(){
             return;
         }
         else{
-            Print( "invalid next_module. "+nxt+" not registered.\n", ERR);
+            Print( "Invalid next_module. "+nxt+" not registered.\n", ERR);
         }
     }
 
     if( addr_nxt<0 || nxt=="" ){
-        Print( "setting up data loopback.\n", ERR);
+        Print( "Setting up data loopback.\n", ERR);
         addr_nxt = ctrl->GetIDByName( this->GetModuleName());
     }
 }

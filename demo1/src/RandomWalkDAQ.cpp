@@ -77,7 +77,7 @@ void RandomWalkDAQ::Deconfigure(){
     }
         // Clear allocated memory.
 
-    Print( "closing input file /dev/random\n", DEBUG);
+    Print( "Closing input file /dev/random\n", DEBUG);
     file.close();
 }
 

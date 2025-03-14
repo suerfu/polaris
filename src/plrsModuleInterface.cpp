@@ -56,22 +56,22 @@ void plrsModuleInterface::Configure(){
 
         int port = GetConfigParser()->GetInt( path+"port", -1);
         if( port<2000 || port>65535)
-            Print("Invalid Port number.\n", ERR);
+            Print( "Invalid Port number.\n", ERR);
 
         string hostname = GetConfigParser()->GetString( path+"hostname");
         socket.InitSocInet( port, hostname );
     }
-    Print("Socket initialized.\n", DETAIL);
+    Print( "Socket initialized.\n", DETAIL);
 
     // If hostname is not specified, then it is run as a server. Otherwise as a client.
     if( socket ){
         if( hostname=="" ){
             if( socket.Bind() < 0 ){
-                Print("Socket bind error\n", ERR);
+                Print( "Socket bind error\n", ERR);
                 SetStatus( ERROR );
             }
             if( socket.Listen() < 0 ){
-                Print("Socket listen error\n", ERR);
+                Print( "Socket listen error\n", ERR);
                 SetStatus( ERROR );
             }
         }
@@ -81,7 +81,7 @@ void plrsModuleInterface::Configure(){
                 list_connections.push_back(socket.GetDescriptor() );
             }
             else{
-                Print("Socket failed to connect\n", ERR);
+                Print( "Socket failed to connect\n", ERR);
                 SetStatus( ERROR );            
             }
         }
@@ -105,7 +105,7 @@ void plrsModuleInterface::Run(){
             socket.SetNonBlock( s2 );
             list_connections.push_back( s2 );
             s2 = -1;
-            Print("Connection accepted.\n", ERR);
+            Print( "Connection accepted.\n", ERR);
         }
     }
     
@@ -122,7 +122,7 @@ void plrsModuleInterface::Run(){
             // write the data stream to remote.
             int nbytes = write( *itr, ss.str().c_str(), strlen( ss.str().c_str() ) );
             if( nbytes<0 ){
-                Print( "write error: " + string( strerror(errno)) + "\n", ERR);
+                Print( "Write error: " + string( strerror(errno)) + "\n", ERR);
                 close( *itr);
                 *itr = -1;
                 continue;
@@ -146,7 +146,7 @@ void plrsModuleInterface::PostRun(){
 
 
 void plrsModuleInterface::Deconfigure(){ 
-    Print( "unconfiguring...\n", DETAIL);
+    Print( "Deconfiguring...\n", DETAIL);
     socket.Close();
 }
 
