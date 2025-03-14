@@ -12,6 +12,7 @@
 
 using namespace std;
 
+string plrsController::GetVersion(){ return "1.1.3"; }
 
 plrsController::plrsController( ConfigParser* m) : cparser(m){
 

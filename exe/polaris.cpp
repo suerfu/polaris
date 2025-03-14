@@ -19,6 +19,11 @@ int main( int argc, char* argv[] ){
     ConfigParser map;
     map.LoadCmdl( argc, argv);
 
+    if( map.GetString("/cmdl/version")!="" ){
+        cout << plrsController::GetVersion() << endl;
+        return 0;
+    }
+
     if( map.GetString("/cmdl/cfg")=="" ){
         
         string libname = map.GetString("/cmdl/help");
@@ -60,6 +65,7 @@ void PrintUsage( int argc, char* argv[], string libname ){
     //cout << "\t\tIf defined, these parameters can be retrieved and printed to screen by specifying the library name after --help.\n\n";
 
     cout << "    --cfg [foo.cfg]\tspecifies configuration file\n";
+    cout << "    --version\t\tdisplays current polaris version\n";
     cout << "    -t, --time [second]\tspecifies maximum run time in seconds\n";
     cout << "    --disable-input,--no-input\n    \t\t\tno user interaction, need to press ctrl+D at the end of program\n";
     cout << "    \t\t\twhen enabled, type /module-name/command to send command to the specific module\n";

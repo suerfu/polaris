@@ -29,6 +29,8 @@ public:
     ~plrsController();
         //!< Destructor. Will clear the state machine vector and release libraries.
 
+    static std::string GetVersion();
+
 	void StateLoop();
         //!< Main function. Make each installed modules transition between different states.
 

@@ -150,9 +150,7 @@ public:
 //    }
         //!< Returns module ID of the module specified in /module/foo/prev_module or /module/foo/prev
 
-    string GetVersion(){
-        return "2.1.1";
-    }
+    //std::string GetVersion(){ return plrsController::GetVersion(); }
         //!< Returns version number for tracking changes.
 
 private:
