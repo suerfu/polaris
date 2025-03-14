@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(polaris)
 
+# Add /usr/local/lib/cmake to the CMAKE_PREFIX_PATH
+list(APPEND CMAKE_PREFIX_PATH "/usr/local/lib/cmake")
+
 set(SOMAJOR 2)
 set(SOMINOR 1)
 set(LIBNAME "lib${PROJECT_NAME}.so.${SOMAJOR}.${SOMINOR}")
@@ -28,7 +31,7 @@ target_link_libraries(${PROJECT_NAME} pthread dl)
 # Build the executable
 add_executable(${PROJECT_NAME}_bin exe/${PROJECT_NAME}.cpp)
 
-set_target_properties(${PROJECT_NAME}_bin PROPERTIES 
+set_target_properties(${PROJECT_NAME}_bin PROPERTIES
     OUTPUT_NAME "${PROJECT_NAME}"
     )
 
@@ -37,13 +40,34 @@ target_link_libraries(${PROJECT_NAME}_bin ${PROJECT_NAME})
 # Installation prefix
 set(INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE PATH "Installation directory prefix")
 
-# Installation
+# Export the targets to a file
 install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_bin
+    EXPORT polarisTargets
     RUNTIME DESTINATION ${INSTALL_PREFIX}/bin
     LIBRARY DESTINATION ${INSTALL_PREFIX}/lib
     ARCHIVE DESTINATION ${INSTALL_PREFIX}/lib
 )
 install(DIRECTORY include/ DESTINATION ${INSTALL_PREFIX}/include/${PROJECT_NAME})
+
+# Install the export file
+install(EXPORT polarisTargets
+    FILE polarisTargets.cmake
+    NAMESPACE polaris::
+    DESTINATION lib/cmake/polaris
+)
+
+# Create and install polarisConfig.cmake file
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/polarisConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/polarisConfig.cmake"
+    INSTALL_DESTINATION lib/cmake/polaris
+)
+
+# Install the configuration file
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/polarisConfig.cmake"
+    DESTINATION lib/cmake/polaris
+)
 
 # Create symbolic links for library versions
 install(CODE "execute_process(COMMAND ln -sf ${INSTALL_PREFIX}/lib/lib${PROJECT_NAME}.so.${SOMAJOR}.${SOMINOR} ${INSTALL_PREFIX}/lib/lib${PROJECT_NAME}.so.${SOMAJOR})")
@@ -65,4 +89,3 @@ add_custom_target(clean-all
     COMMAND rm -rf ${PROJECT_NAME}_exec
     VERBATIM
 )
-
