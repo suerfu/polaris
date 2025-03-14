@@ -17,7 +17,7 @@ file(GLOB CPP_FILES "src/*.cpp")
 # Create library
 add_library(${PROJECT_NAME} SHARED ${CPP_FILES})
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    OUTPUT_NAME "${PROJECT_NAME}"
+    OUTPUT_NAME "lib${PROJECT_NAME}"
     VERSION "${SOMAJOR}.${SOMINOR}"
     SOVERSION "${SOMAJOR}"
 )
@@ -26,14 +26,19 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_link_libraries(${PROJECT_NAME} pthread dl)
 
 # Build the executable
-add_executable(${PROJECT_NAME}_exec exe/${PROJECT_NAME}.cpp)
-target_link_libraries(${PROJECT_NAME}_exec ${PROJECT_NAME})
+add_executable(${PROJECT_NAME}_bin exe/${PROJECT_NAME}.cpp)
+
+set_target_properties(${PROJECT_NAME}_bin PROPERTIES 
+    OUTPUT_NAME "${PROJECT_NAME}"
+    )
+
+target_link_libraries(${PROJECT_NAME}_bin ${PROJECT_NAME})
 
 # Installation prefix
 set(INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE PATH "Installation directory prefix")
 
 # Installation
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_exec
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_bin
     RUNTIME DESTINATION ${INSTALL_PREFIX}/bin
     LIBRARY DESTINATION ${INSTALL_PREFIX}/lib
     ARCHIVE DESTINATION ${INSTALL_PREFIX}/lib
