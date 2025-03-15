@@ -33,6 +33,16 @@ ConfigParser::ConfigParser( int argc, char* argv[]){
 }
 
 
+string ReadFileToString(const std::string& filePath) {
+    std::ifstream fileStream(filePath);
+    if (!fileStream.is_open()) {
+        throw std::runtime_error("Could not open file");
+    }
+
+    std::stringstream buffer;
+    buffer << fileStream.rdbuf();
+    return buffer.str();
+}
 
 void ConfigParser::Serialize( ostream& os){
 
@@ -312,6 +322,8 @@ void ConfigParser::LoadCmdl( int argc, char* argv[]){
 
 // Load configuration file.
 int ConfigParser::LoadFile( const string& filename ){
+
+    config_txt = ReadFileToString( filename );
 
     // check if file opened successfully
     ifstream file( filename.c_str(), std::ios_base::in );

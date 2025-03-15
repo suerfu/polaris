@@ -92,6 +92,9 @@ public:
     string GetQuotedString( istream& );
         //!< Get \" delimited strings from input.
 
+    string GetConfigFileTxt(){
+        return config_txt;
+    }
 
     //======= Operation on individual parameters ==============================
 
@@ -239,6 +242,10 @@ private:
 
     vector< string > file_loaded;
         //!< Prevent loading same file multiple times via the @include feature.
+
+    string config_txt;
+        //!< entire configuration file as a string
+        // Note: this case does not handle multiple configuration files well.
 
     void RmComment(  ifstream& input, char marker = '#' );
         //!< Removes white space, lines starting with comment marker and any following white lines.
