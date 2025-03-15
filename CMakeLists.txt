@@ -4,7 +4,7 @@ project(polaris)
 # Add /usr/local/lib/cmake to the CMAKE_PREFIX_PATH
 list(APPEND CMAKE_PREFIX_PATH "/usr/local/lib/cmake")
 
-set(SOMAJOR 2)
+set(SOMAJOR 1)
 set(SOMINOR 1)
 set(LIBNAME "${PROJECT_NAME}.so.${SOMAJOR}.${SOMINOR}")
 
