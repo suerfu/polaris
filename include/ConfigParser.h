@@ -92,6 +92,9 @@ public:
     string GetQuotedString( istream& );
         //!< Get \" delimited strings from input.
 
+
+    string ReadFileToString( const std::string& filePath );
+    
     string GetConfigFileTxt(){
         return config_txt;
     }

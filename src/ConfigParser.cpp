@@ -33,7 +33,7 @@ ConfigParser::ConfigParser( int argc, char* argv[]){
 }
 
 
-string ReadFileToString(const std::string& filePath) {
+string ConfigParser::ReadFileToString( const std::string& filePath ){
     std::ifstream fileStream(filePath);
     if (!fileStream.is_open()) {
         throw std::runtime_error("Could not open file");
@@ -324,6 +324,7 @@ void ConfigParser::LoadCmdl( int argc, char* argv[]){
 int ConfigParser::LoadFile( const string& filename ){
 
     config_txt = ReadFileToString( filename );
+    cout << config_txt << endl;
 
     // check if file opened successfully
     ifstream file( filename.c_str(), std::ios_base::in );
