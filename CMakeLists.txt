@@ -6,7 +6,7 @@ list(APPEND CMAKE_PREFIX_PATH "/usr/local/lib/cmake")
 
 set(SOMAJOR 2)
 set(SOMINOR 1)
-set(LIBNAME "lib${PROJECT_NAME}.so.${SOMAJOR}.${SOMINOR}")
+set(LIBNAME "${PROJECT_NAME}.so.${SOMAJOR}.${SOMINOR}")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-Wall")
@@ -20,7 +20,7 @@ file(GLOB CPP_FILES "src/*.cpp")
 # Create library
 add_library(${PROJECT_NAME} SHARED ${CPP_FILES})
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    OUTPUT_NAME "lib${PROJECT_NAME}"
+    OUTPUT_NAME "${PROJECT_NAME}"
     VERSION "${SOMAJOR}.${SOMINOR}"
     SOVERSION "${SOMAJOR}"
 )
