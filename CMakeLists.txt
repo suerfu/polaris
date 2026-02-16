@@ -70,10 +70,6 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/polarisConfig.cmake"
     DESTINATION lib/cmake/polaris
 )
 
-# Create symbolic links for library versions
-install(CODE "execute_process(COMMAND ln -sf ${INSTALL_PREFIX}/lib/lib${PROJECT_NAME}.so.${SOMAJOR}.${SOMINOR} ${INSTALL_PREFIX}/lib/lib${PROJECT_NAME}.so.${SOMAJOR})")
-install(CODE "execute_process(COMMAND ln -sf ${INSTALL_PREFIX}/lib/lib${PROJECT_NAME}.so.${SOMAJOR} ${INSTALL_PREFIX}/lib/lib${PROJECT_NAME}.so)")
-
 # Uninstall target
 add_custom_target(uninstall
     COMMAND xargs rm < install_manifest.txt
